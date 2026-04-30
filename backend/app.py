@@ -3,7 +3,7 @@ from flask_cors import CORS
 import mysql.connector
 from mysql.connector import Error
 from config import Config
-
+import os
 app = Flask(__name__)
 CORS(app)
 
@@ -830,7 +830,7 @@ def register_recipient():
 
     return jsonify({"success": True, "user_id": user_id, "recipient_id": recipient_id})
 if __name__ == "__main__":
-    import os
 
-port = int(os.environ.get("PORT", 5000))
+
+    port = int(os.environ.get("PORT", 5000))
 app.run(host="0.0.0.0", port=port)
