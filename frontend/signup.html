@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BBMS Sign Up</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="login-container">
+    <div class="login-card">
+
+        <h1>Create Account</h1>
+
+        <form id="signupForm">
+            <input type="text" id="signupFirstName" placeholder="First name" required>
+            <input type="text" id="signupLastName" placeholder="Last name" required>
+            <input type="number" id="signupAge" placeholder="Age" required>
+
+            <select id="signupGender" required>
+                <option value="">Gender</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
+            </select>
+
+            <input type="email" id="signupEmail" placeholder="Email" required>
+            <input type="password" id="signupPassword" placeholder="Password" required>
+            <input type="text" id="signupPhone" placeholder="Phone" required>
+
+            <select id="signupRole" required>
+                <option value="">Register as</option>
+                <option value="Donor">Donor</option>
+                <option value="Recipient">Recipient</option>
+            </select>
+
+            <input type="text" id="signupBloodType" placeholder="Blood type e.g. O+" required>
+            <input type="number" id="signupWeight" placeholder="Weight kg - donor only">
+            <input type="text" id="signupCondition" placeholder="Medical condition - recipient only">
+
+            <button type="submit">Sign Up</button>
+        </form>
+
+        <p style="margin-top:15px;">
+            Already have an account?
+            <a href="index.html">Login</a>
+        </p>
+
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

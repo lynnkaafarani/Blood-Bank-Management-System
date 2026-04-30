@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - BBMS</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<header class="topbar">
+    <h1>BBMS Admin Dashboard</h1>
+    <button onclick="logout()">Logout</button>
+</header>
+
+<main class="dashboard">
+
+    <section class="card">
+        <h2>Logged-in Admin</h2>
+        <p id="userInfo"></p>
+    </section>
+
+    <section class="card">
+        <h2>System Users</h2>
+        <div id="usersTable">Loading users...</div>
+    </section>
+
+    <section class="card">
+        <h2>Hospitals</h2>
+
+        <form id="hospitalForm" class="form-row">
+            <input type="text" id="hospitalName" placeholder="Hospital name" required>
+            <input type="text" id="hospitalLocation" placeholder="Location" required>
+            <input type="text" id="hospitalContact" placeholder="Contact info" required>
+            <button type="submit">Add Hospital</button>
+        </form>
+
+        <div id="hospitalsTable">Loading hospitals...</div>
+    </section>
+<section class="card">
+    <h2>Hospital Staff Management</h2>
+
+    <form id="staffForm" class="form-row">
+        <input type="text" id="staffFirstName" placeholder="First name" required>
+        <input type="text" id="staffLastName" placeholder="Last name" required>
+        <input type="number" id="staffAge" placeholder="Age" required>
+       <select id="staffGender" required>
+    <option value="">Select Gender</option>
+    <option value="Male">Male</option>
+    <option value="Female">Female</option>
+    <option value="Other">Other</option>
+</select>
+        <input type="email" id="staffEmail" placeholder="Email" required>
+        <input type="text" id="staffPhone" placeholder="Phone" required>
+        <input type="password" id="staffPassword" placeholder="Password" required>
+        <input type="number" id="staffHospitalId" placeholder="Hospital ID" required>
+        <input type="text" id="staffRole" placeholder="Staff role" required>
+        <button type="submit">Create Staff</button>
+    </form>
+
+    <div id="staffTable">Loading staff...</div>
+</section>
+    <section class="card">
+        <h2>Activity Logs</h2>
+        <div id="logsTable">Loading logs...</div>
+    </section>
+
+</main>
+
+<script>
+const API_URL = "http://127.0.0.1:5000/api";
+const user = JSON.parse(localStorage.getItem("bbms_user"));
+
+if (!user || user.role !== "Administrator") {
+    window.location.href = "../index.html";
+}
+
+document.getElementById("userInfo").textContent =
+    `${user.full_name} (${user.email}) - ${user.role}`;
+
+function logout() {
+    localStorage.removeItem("bbms_user");
+    window.location.href = "../index.html";
+}
+
+async function loadUsers() {
+    const res = await fetch(`${API_URL}/users`);
+    const result = await res.json();
+
+    let html = `
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+            </tr>
+    `;
+
+    result.data.forEach(u => {
+        html += `
+            <tr>
+                <td>${u.user_id}</td>
+                <td>${u.first_name} ${u.last_name}</td>
+                <td>${u.email}</td>
+                <td>${u.role}</td>
+                <td>${u.account_status}</td>
+            </tr>
+        `;
+    });
+
+    html += `</table>`;
+    document.getElementById("usersTable").innerHTML = html;
+}
+
+async function loadHospitals() {
+    const res = await fetch(`${API_URL}/hospitals`);
+    const result = await res.json();
+
+    let html = `
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Hospital</th>
+                <th>Location</th>
+                <th>Contact</th>
+            </tr>
+    `;
+
+    result.data.forEach(h => {
+        html += `
+            <tr>
+                <td>${h.hospital_id}</td>
+                <td>${h.hospital_name}</td>
+                <td>${h.location}</td>
+                <td>${h.contact_info}</td>
+            </tr>
+        `;
+    });
+
+    html += `</table>`;
+    document.getElementById("hospitalsTable").innerHTML = html;
+}
+
+async function loadLogs() {
+    const res = await fetch(`${API_URL}/activity-logs`);
+    const result = await res.json();
+
+    let html = `
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Action</th>
+                <th>Entity</th>
+                <th>Description</th>
+                <th>Date</th>
+            </tr>
+    `;
+
+    result.data.forEach(log => {
+        html += `
+            <tr>
+                <td>${log.log_id}</td>
+                <td>${log.action_type}</td>
+                <td>${log.entity_type || ""}</td>
+                <td>${log.description || ""}</td>
+                <td>${log.created_at || ""}</td>
+            </tr>
+        `;
+    });
+
+    html += `</table>`;
+    document.getElementById("logsTable").innerHTML = html;
+}
+
+document.getElementById("hospitalForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const hospital = {
+        hospital_name: document.getElementById("hospitalName").value,
+        location: document.getElementById("hospitalLocation").value,
+        contact_info: document.getElementById("hospitalContact").value
+    };
+
+    await fetch(`${API_URL}/hospitals`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(hospital)
+    });
+
+    this.reset();
+    loadHospitals();
+});
+async function loadStaff() {
+    const res = await fetch(`${API_URL}/admin/staff`);
+    const result = await res.json();
+
+    let html = `
+        <table>
+            <tr>
+                <th>Staff ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Hospital</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+    `;
+
+    result.data.forEach(s => {
+        html += `
+            <tr>
+                <td>${s.staff_id}</td>
+                <td>${s.first_name} ${s.last_name}</td>
+                <td>${s.email}</td>
+                <td>${s.hospital_name}</td>
+                <td>${s.staff_role}</td>
+                <td>${s.account_status}</td>
+                <td>
+                    <button onclick="setStaffStatus(${s.user_id}, 'Active')">Activate</button>
+                    <button onclick="setStaffStatus(${s.user_id}, 'Inactive')">Deactivate</button>
+                    <button onclick="deleteStaff(${s.staff_id})">Delete</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `</table>`;
+    document.getElementById("staffTable").innerHTML = html;
+}
+
+document.getElementById("staffForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const staff = {
+        first_name: document.getElementById("staffFirstName").value,
+        last_name: document.getElementById("staffLastName").value,
+        age: document.getElementById("staffAge").value,
+        gender: document.getElementById("staffGender").value,
+        email: document.getElementById("staffEmail").value,
+        phone: document.getElementById("staffPhone").value,
+        password: document.getElementById("staffPassword").value,
+        hospital_id: document.getElementById("staffHospitalId").value,
+        staff_role: document.getElementById("staffRole").value
+    };
+
+    const res = await fetch(`${API_URL}/admin/staff`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(staff)
+    });
+
+    const result = await res.json();
+
+    if (!result.success) {
+        alert(result.message || "Could not create staff");
+        return;
+    }
+
+    alert("Staff created successfully");
+    this.reset();
+
+    loadStaff();
+    loadUsers();
+});
+
+async function setStaffStatus(userId, status) {
+    await fetch(`${API_URL}/admin/staff/${userId}/status`, {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({account_status: status})
+    });
+
+    loadStaff();
+    loadUsers();
+}
+
+async function deleteStaff(staffId) {
+    if (!confirm("Delete this staff account?")) return;
+
+    await fetch(`${API_URL}/admin/staff/${staffId}`, {
+        method: "DELETE"
+    });
+
+    loadStaff();
+    loadUsers();
+}
+loadUsers();
+loadHospitals();
+loadStaff();
+loadLogs();
+</script>
+</body>
+</html>

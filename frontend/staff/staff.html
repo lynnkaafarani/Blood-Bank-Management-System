@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Staff Dashboard - BBMS</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<header class="topbar">
+    <h1>Hospital Staff Dashboard</h1>
+    <button onclick="logout()">Logout</button>
+</header>
+
+<main class="dashboard">
+
+    <section class="card">
+        <h2>Logged-in Staff</h2>
+        <p id="userInfo"></p>
+    </section>
+
+    <!-- FILTER -->
+    <section class="card">
+        <h2>Filter Inventory</h2>
+        <input type="text" id="filterType" placeholder="Blood type (A+, O-...)">
+        <button onclick="loadInventory()">Apply Filter</button>
+    </section>
+
+    <!-- INVENTORY -->
+    <section class="card">
+        <h2>Blood Inventory</h2>
+        <div id="inventoryTable">Loading...</div>
+    </section>
+
+    <!-- ADD BLOOD UNIT -->
+    <section class="card">
+        <h2>Add Blood Unit</h2>
+        <form id="bloodForm" class="form-row" autocomplete="off">
+            <input type="number" id="donor_id" placeholder="Donor ID">
+            <input type="text" id="blood_type" placeholder="Blood Type" required>
+            <input type="number" id="quantity_ml" placeholder="Quantity ml" required>
+            <input type="date" id="donation_date" required>
+            <input type="date" id="expiry_date" required>
+            <button type="submit">Add</button>
+        </form>
+    </section>
+
+    <!-- REGISTER DONATION -->
+    <section class="card">
+        <h2>Register Donation</h2>
+        <form id="donationForm" class="form-row">
+            <input type="number" id="donor_id_donation" placeholder="Donor ID" required>
+            <input type="text" id="blood_type_donation" placeholder="Blood Type" required>
+            <input type="number" id="quantity_donation" placeholder="Quantity ml" required>
+            <button type="submit">Register</button>
+        </form>
+    </section>
+
+    <!-- REQUESTS -->
+    <section class="card">
+        <h2>Blood Requests</h2>
+        <div id="requestsTable">Loading...</div>
+    </section>
+
+</main>
+
+<script>
+const API_URL = "http://127.0.0.1:5000/api";
+const user = JSON.parse(localStorage.getItem("bbms_user"));
+let staffProfile = null;
+
+if (!user || user.role !== "HospitalStaff") {
+    window.location.href = "../index.html";
+}
+
+function logout() {
+    localStorage.removeItem("bbms_user");
+    window.location.href = "../index.html";
+}
+
+async function loadStaffProfile() {
+    const res = await fetch(`${API_URL}/staff/${user.user_id}/profile`);
+    const result = await res.json();
+    staffProfile = result.data;
+
+    document.getElementById("userInfo").textContent =
+        `${user.full_name} - ${staffProfile.hospital_name}`;
+}
+
+async function loadInventory() {
+    const filter = document.getElementById("filterType").value.toLowerCase();
+
+    const res = await fetch(`${API_URL}/staff/${user.user_id}/inventory`);
+    const result = await res.json();
+
+    let html = `<table>
+        <tr>
+            <th>ID</th><th>Type</th><th>Qty</th><th>Status</th>
+            <th>Expiry</th><th>Actions</th>
+        </tr>`;
+
+    result.data.forEach(b => {
+        if (filter && !b.blood_type.toLowerCase().includes(filter)) return;
+
+        html += `
+        <tr>
+            <td>${b.blood_unit_id}</td>
+            <td>${b.blood_type}</td>
+            <td>${b.quantity_ml}</td>
+            <td>${b.status}</td>
+            <td>${b.expiry_date}</td>
+            <td>
+                <button onclick="editUnit(${b.blood_unit_id})">Edit</button>
+                <button onclick="deleteUnit(${b.blood_unit_id})">Delete</button>
+            </td>
+        </tr>`;
+    });
+
+    html += "</table>";
+    document.getElementById("inventoryTable").innerHTML = html;
+}
+
+async function editUnit(id) {
+    const qty = prompt("New quantity:");
+    const status = prompt("Status (Available/Used/Expired):");
+
+    await fetch(`${API_URL}/blood-units/${id}`, {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            quantity_ml: qty,
+            expiry_date: new Date().toISOString().split('T')[0],
+            status: status
+        })
+    });
+
+    loadInventory();
+}
+
+async function deleteUnit(id) {
+    if (!confirm("Delete this unit?")) return;
+
+    await fetch(`${API_URL}/blood-units/${id}`, {
+        method: "DELETE"
+    });
+
+    loadInventory();
+}
+
+document.getElementById("bloodForm").addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const response = await fetch(`${API_URL}/blood-units`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            hospital_id: staffProfile.hospital_id,
+            donor_id: document.getElementById("donor_id").value || null,
+            blood_type: document.getElementById("blood_type").value,
+            quantity_ml: document.getElementById("quantity_ml").value,
+            donation_date: document.getElementById("donation_date").value,
+            expiry_date: document.getElementById("expiry_date").value
+        })
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+        alert("Error: " + (result.error || result.message || "Could not add blood unit"));
+        return;
+    }
+
+   alert("Blood unit added successfully");
+
+const form = document.getElementById("bloodForm");
+form.reset();
+
+["donor_id", "blood_type", "quantity_ml", "donation_date", "expiry_date"].forEach(id => {
+    const field = document.getElementById(id);
+    field.value = "";
+    field.defaultValue = "";
+});
+
+await loadInventory();});
+
+document.getElementById("donationForm").addEventListener("submit", async e => {
+    e.preventDefault();
+
+    await fetch(`${API_URL}/staff/register-donation`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            donor_id: document.getElementById("donor_id_donation").value,
+            staff_id: staffProfile.staff_id,
+            hospital_id: staffProfile.hospital_id,
+            blood_type: document.getElementById("blood_type_donation").value,
+            quantity_ml: document.getElementById("quantity_donation").value
+        })
+    });
+
+    alert("Donation registered!");
+    e.target.reset();
+    loadInventory();
+
+});
+
+async function loadRequests() {
+    const res = await fetch(`${API_URL}/staff/${user.user_id}/requests`);
+    const result = await res.json();
+
+    let html = `<table>
+        <tr>
+            <th>ID</th><th>Recipient</th><th>Type</th>
+            <th>Qty</th><th>Status</th><th>Action</th>
+        </tr>`;
+
+    result.data.forEach(r => {
+        html += `
+        <tr>
+            <td>${r.request_id}</td>
+            <td>${r.recipient_name}</td>
+            <td>${r.blood_type}</td>
+            <td>${r.quantity_needed_ml}</td>
+            <td>${r.status}</td>
+            <td>
+                <button onclick="approve(${r.request_id})">Approve</button>
+                <button onclick="rejectReq(${r.request_id})">Reject</button>
+            </td>
+        </tr>`;
+    });
+
+    html += "</table>";
+    document.getElementById("requestsTable").innerHTML = html;
+}
+
+async function approve(id) {
+    const unit = prompt("Enter matching blood unit ID:");
+
+    await fetch(`${API_URL}/blood-requests/${id}/fulfill`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            blood_unit_id: unit,
+            staff_id: staffProfile.staff_id
+        })
+    });
+
+    loadRequests();
+    loadInventory();
+}
+
+async function rejectReq(id) {
+    const reason = prompt("Reason:");
+
+    await fetch(`${API_URL}/blood-requests/${id}/reject`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            staff_id: staffProfile.staff_id,
+            reason: reason
+        })
+    });
+
+    loadRequests();
+}
+
+async function init() {
+    await loadStaffProfile();
+    await loadInventory();
+    await loadRequests();
+}
+
+init();
+</script>
+
+</body>
+</html>

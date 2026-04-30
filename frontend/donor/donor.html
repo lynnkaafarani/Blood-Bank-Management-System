@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Donor Dashboard - BBMS</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+<header class="topbar">
+    <h1>Donor Dashboard</h1>
+    <button onclick="logout()">Logout</button>
+</header>
+
+<main class="dashboard">
+
+    <section class="card">
+        <h2>Logged-in Donor</h2>
+        <p id="userInfo"></p>
+    </section>
+
+    <section class="card">
+        <h2>My Profile</h2>
+        <div id="profileBox">Loading profile...</div>
+    </section>
+<section class="card">
+    <h2>Update My Profile</h2>
+    <form id="profileForm" class="form-row">
+        <input type="text" id="updateFirstName" placeholder="First name" required>
+        <input type="text" id="updateLastName" placeholder="Last name" required>
+        <input type="text" id="updatePhone" placeholder="Phone" required>
+        <input type="text" id="updateHealthStatus" placeholder="Health status" required>
+        <input type="number" id="updateWeight" placeholder="Weight kg" required>
+        <select id="updateMedication">
+            <option value="false">No medication restriction</option>
+            <option value="true">Medication restricted</option>
+        </select>
+        <button type="submit">Update Profile</button>
+    </form>
+</section>
+    <section class="card">
+        <h2>Search Hospitals</h2>
+        <input type="text" id="hospitalSearch" placeholder="Search by hospital name or location">
+        <button onclick="loadHospitals()">Search</button>
+        <div id="hospitalsTable">Loading hospitals...</div>
+    </section>
+
+    <section class="card">
+        <h2>Schedule Donation Appointment</h2>
+        <form id="appointmentForm" class="form-row">
+            <input type="number" id="appointmentHospitalId" placeholder="Hospital ID" required>
+            <input type="datetime-local" id="appointmentDateTime" required>
+            <input type="text" id="appointmentNotes" placeholder="Notes">
+            <button type="submit">Schedule</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>My Appointments</h2>
+        <div id="appointmentsTable">Loading appointments...</div>
+    </section>
+
+    <section class="card">
+        <h2>Donation History</h2>
+        <div id="historyTable">Loading history...</div>
+    </section>
+
+    <section class="card">
+        <h2>Notifications</h2>
+        <div id="notificationsBox">Loading notifications...</div>
+    </section>
+
+</main>
+
+<script src="donor.js"></script>
+</body>
+</html>
