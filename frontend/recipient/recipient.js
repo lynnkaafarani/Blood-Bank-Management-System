@@ -251,6 +251,8 @@ async function init() {
     await loadBloodInventory();
     await loadMyRequests();
     await loadNotifications();
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById("filterDate").min = today;
 }
 
 init();

@@ -234,6 +234,11 @@ async function init() {
     await loadAppointments();
     await loadDonationHistory();
     await loadNotifications();
+     // ← ADD THIS: set min date to today
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const minVal = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    document.getElementById("appointmentDateTime").min = minVal;
 }
 document.getElementById("profileForm").addEventListener("submit", async function(e) {
     e.preventDefault();
