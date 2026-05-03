@@ -107,7 +107,120 @@ def home():
 
 
 # =====================================================
-# DONOR REGISTER (FIXED)
+# AUTH PLACEHOLDER (since frontend expects login)
+# =====================================================
+
+@app.route("/api/login", methods=["POST"])
+def login():
+    data = request.json or {}
+
+    email = data.get("email")
+    password = data.get("password")
+
+    user = query_db("""
+        SELECT user_id, first_name, last_name, email, role
+        FROM UserAccount
+        WHERE email = %s AND password_hash = %s
+    """, (email, password))
+
+    if not user:
+        return jsonify({
+            "success": False,
+            "message": "Invalid credentials"
+        }), 401
+
+    user = user[0]
+
+    return jsonify({
+        "success": True,
+        "user": {
+            "user_id": user["user_id"],
+            "full_name": user["first_name"] + " " + user["last_name"],
+            "email": user["email"],
+            "role": user["role"]
+        }
+    })
+
+# =====================================================
+# DONORS
+# =====================================================
+
+@app.route("/api/donors", methods=["GET"])
+def get_donors():
+    rows = query_db("""
+        SELECT 
+            d.donor_id,
+            d.user_id,
+            d.blood_type,
+            d.health_status,
+            d.weight_kg,
+            d.eligibility_status,
+            u.first_name,
+            u.last_name,
+            u.email,
+            u.phone
+        FROM Donor d
+        JOIN UserAccount u ON d.user_id = u.user_id
+    """)
+    return jsonify({"success": True, "data": rows})
+
+
+@app.route("/api/donors/<int:donor_id>", methods=["GET"])
+def get_donor_by_id(donor_id):
+    row = query_db("""
+        SELECT 
+            d.donor_id,
+            d.user_id,
+            d.blood_type,
+            d.health_status,
+            d.weight_kg,
+            d.eligibility_status,
+            d.medication_restricted,
+            u.first_name,
+            u.last_name,
+            u.email,
+            u.phone
+        FROM Donor d
+        JOIN UserAccount u ON d.user_id = u.user_id
+        WHERE d.donor_id = %s
+    """, (donor_id,))
+
+    if not row:
+        return jsonify({"success": False, "message": "Not found"}), 404
+
+    return jsonify({"success": True, "data": row[0]})
+
+
+@app.route("/api/donors/<int:donor_id>", methods=["PUT"])
+def update_donor(donor_id):
+    data = request.json or {}
+
+    query_db("""
+        UPDATE UserAccount u
+        JOIN Donor d ON u.user_id = d.user_id
+        SET 
+            u.first_name = %s,
+            u.last_name = %s,
+            u.phone = %s,
+            d.health_status = %s,
+            d.weight_kg = %s,
+            d.medication_restricted = %s
+        WHERE d.donor_id = %s
+    """, (
+        data.get("first_name"),
+        data.get("last_name"),
+        data.get("phone"),
+        data.get("health_status"),
+        data.get("weight_kg"),
+        data.get("medication_restricted"),
+        donor_id
+    ), fetch=False)
+
+    return jsonify({"success": True})
+
+
+# =====================================================
+# DONOR REGISTER
 # =====================================================
 
 @app.route("/api/donors/register", methods=["POST"])
@@ -119,12 +232,11 @@ def register_donor():
     blood_type = clean_blood_type(data.get("blood_type"))
     weight = safe_float(data.get("weight_kg"))
 
-    # VALIDATION
     if not is_valid_email(email):
         return jsonify({"success": False, "message": "Invalid email"}), 400
 
     if not phone:
-        return jsonify({"success": False, "message": "Invalid phone number"}), 400
+        return jsonify({"success": False, "message": "Invalid phone"}), 400
 
     if not blood_type:
         return jsonify({"success": False, "message": "Invalid blood type"}), 400
@@ -132,14 +244,6 @@ def register_donor():
     if weight is None:
         return jsonify({"success": False, "message": "Invalid weight"}), 400
 
-    # DUPLICATES (FIXED NORMALIZATION ISSUE)
-    if query_db("SELECT user_id FROM UserAccount WHERE email=%s", (email,)):
-        return jsonify({"success": False, "message": "Email exists"}), 400
-
-    if query_db("SELECT user_id FROM UserAccount WHERE phone=%s", (phone,)):
-        return jsonify({"success": False, "message": "Phone exists"}), 400
-
-    # CREATE USER
     user_id = query_db("""
         INSERT INTO UserAccount
         (first_name,last_name,age,gender,email,password_hash,phone,role)
@@ -153,9 +257,6 @@ def register_donor():
         data.get("password"),
         phone
     ), fetch=False)
-
-    if not user_id:
-        return jsonify({"success": False, "message": "User creation failed"}), 500
 
     donor_id = query_db("""
         INSERT INTO Donor
@@ -173,88 +274,103 @@ def register_donor():
 
 
 # =====================================================
-# RECIPIENT REGISTER
+# HOSPITALS
 # =====================================================
 
-@app.route("/api/recipients/register", methods=["POST"])
-def register_recipient():
+@app.route("/api/hospitals", methods=["GET"])
+def get_hospitals():
+    rows = query_db("""
+        SELECT hospital_id, hospital_name, location, contact_info
+        FROM Hospital
+    """)
+    return jsonify({"success": True, "data": rows})
+
+
+# =====================================================
+# APPOINTMENTS
+# =====================================================
+
+@app.route("/api/appointments", methods=["GET"])
+def get_appointments():
+    rows = query_db("""
+        SELECT a.*, h.hospital_name
+        FROM Appointment a
+        JOIN Hospital h ON a.hospital_id = h.hospital_id
+    """)
+    return jsonify({"success": True, "data": rows})
+
+
+@app.route("/api/appointments", methods=["POST"])
+def create_appointment():
     data = request.json or {}
 
-    email = data.get("email", "").strip().lower()
-    phone = clean_phone(data.get("phone"))
-    blood_type = clean_blood_type(data.get("blood_type"))
-
-    if not is_valid_email(email):
-        return jsonify({"success": False, "message": "Invalid email"}), 400
-
-    if not phone:
-        return jsonify({"success": False, "message": "Invalid phone"}), 400
-
-    if not blood_type:
-        return jsonify({"success": False, "message": "Invalid blood type"}), 400
-
-    user_id = query_db("""
-        INSERT INTO UserAccount
-        (first_name,last_name,age,gender,email,password_hash,phone,role)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,'Recipient')
+    appointment_id = query_db("""
+        INSERT INTO Appointment
+        (donor_id,hospital_id,appointment_datetime,eligibility_snapshot,notes,status)
+        VALUES (%s,%s,%s,%s,%s,'Pending')
     """, (
-        data.get("first_name"),
-        data.get("last_name"),
-        data.get("age"),
-        data.get("gender"),
-        email,
-        data.get("password"),
-        phone
-    ), fetch=False)
-
-    if not user_id:
-        return jsonify({"success": False, "message": "User creation failed"}), 500
-
-    recipient_id = query_db("""
-        INSERT INTO Recipient
-        (user_id,blood_type,medical_condition)
-        VALUES (%s,%s,%s)
-    """, (
-        user_id,
-        blood_type,
-        data.get("medical_condition", "")
-    ), fetch=False)
-
-    return jsonify({"success": True, "user_id": user_id, "recipient_id": recipient_id})
-
-
-# =====================================================
-# BLOOD UNIT
-# =====================================================
-
-@app.route("/api/blood-units", methods=["POST"])
-def add_blood_unit():
-    data = request.json or {}
-
-    blood_type = clean_blood_type(data.get("blood_type"))
-
-    if not blood_type:
-        return jsonify({"success": False, "message": "Invalid blood type"}), 400
-
-    blood_unit_id = query_db("""
-        INSERT INTO BloodUnit
-        (hospital_id,donor_id,blood_type,component_type,quantity_ml,donation_date,expiry_date,status)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,'Available')
-    """, (
-        data.get("hospital_id"),
         data.get("donor_id"),
-        blood_type,
-        data.get("component_type", "Whole Blood"),
-        data.get("quantity_ml"),
-        data.get("donation_date"),
-        data.get("expiry_date")
+        data.get("hospital_id"),
+        data.get("appointment_datetime"),
+        data.get("eligibility_snapshot"),
+        data.get("notes")
     ), fetch=False)
 
-    return jsonify({"success": True, "blood_unit_id": blood_unit_id})
+    return jsonify({"success": True, "appointment_id": appointment_id})
 
 
 # =====================================================
-# DONATION
+# HISTORY
+# =====================================================
+
+@app.route("/api/donors/<int:donor_id>/history", methods=["GET"])
+def donor_history(donor_id):
+    rows = query_db("""
+        SELECT 
+            dn.donation_id,
+            dn.donation_date,
+            bu.blood_type,
+            bu.quantity_ml,
+            h.hospital_name,
+            bu.status
+        FROM Donation dn
+        JOIN BloodUnit bu ON dn.blood_unit_id = bu.blood_unit_id
+        JOIN Hospital h ON bu.hospital_id = h.hospital_id
+        WHERE dn.donor_id = %s
+    """, (donor_id,))
+
+    return jsonify({"success": True, "data": rows})
+
+
+# =====================================================
+# NOTIFICATIONS
+# =====================================================
+
+@app.route("/api/notifications/<int:user_id>", methods=["GET"])
+def get_notifications(user_id):
+    rows = query_db("""
+        SELECT *
+        FROM Notification
+        WHERE user_id = %s
+        ORDER BY notification_date DESC
+    """, (user_id,))
+
+    return jsonify({"success": True, "data": rows})
+
+
+@app.route("/api/notifications/<int:notification_id>/read", methods=["PUT"])
+def mark_notification(notification_id):
+    query_db("""
+        UPDATE Notification
+        SET is_read = 1
+        WHERE notification_id = %s
+    """, (notification_id,), fetch=False)
+
+    return jsonify({"success": True})
+
+
+# =====================================================
+# DONATION REGISTER (your existing feature)
 # =====================================================
 
 @app.route("/api/donations/register", methods=["POST"])
@@ -263,36 +379,28 @@ def register_donation():
 
     blood_type = clean_blood_type(data.get("blood_type"))
 
-    if not blood_type:
-        return jsonify({"success": False, "message": "Invalid blood type"}), 400
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    conn = None
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
+    args = [
+        data.get("donor_id"),
+        data.get("staff_id"),
+        data.get("hospital_id"),
+        blood_type,
+        data.get("quantity_ml"),
+        0,
+        0
+    ]
 
-        args = [
-            data.get("donor_id"),
-            data.get("staff_id"),
-            data.get("hospital_id"),
-            blood_type,
-            data.get("quantity_ml"),
-            0,
-            0
-        ]
+    result = cursor.callproc("RegisterDonation", args)
+    conn.commit()
+    conn.close()
 
-        result = cursor.callproc("RegisterDonation", args)
-        conn.commit()
-
-        return jsonify({
-            "success": True,
-            "donation_id": result[5],
-            "blood_unit_id": result[6]
-        })
-
-    finally:
-        if conn:
-            conn.close()
+    return jsonify({
+        "success": True,
+        "donation_id": result[5],
+        "blood_unit_id": result[6]
+    })
 
 
 # =====================================================
@@ -302,4 +410,3 @@ def register_donation():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-    
