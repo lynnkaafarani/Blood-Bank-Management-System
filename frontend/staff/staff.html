@@ -19,20 +19,17 @@
         <p id="userInfo"></p>
     </section>
 
-    <!-- FILTER -->
     <section class="card">
         <h2>Filter Inventory</h2>
         <input type="text" id="filterType" placeholder="Blood type (A+, O-...)">
         <button onclick="loadInventory()">Apply Filter</button>
     </section>
 
-    <!-- INVENTORY -->
     <section class="card">
         <h2>Blood Inventory</h2>
         <div id="inventoryTable">Loading...</div>
     </section>
 
-    <!-- ADD BLOOD UNIT -->
     <section class="card">
         <h2>Add Blood Unit</h2>
         <form id="bloodForm" class="form-row" autocomplete="off">
@@ -45,7 +42,6 @@
         </form>
     </section>
 
-    <!-- REGISTER DONATION -->
     <section class="card">
         <h2>Register Donation</h2>
         <form id="donationForm" class="form-row">
@@ -56,7 +52,6 @@
         </form>
     </section>
 
-    <!-- REQUESTS -->
     <section class="card">
         <h2>Blood Requests</h2>
         <div id="requestsTable">Loading...</div>
@@ -66,9 +61,9 @@
 
 <script>
 const API_URL = "http://127.0.0.1:5000/api";
-const user = JSON.parse(localStorage.getItem("bbms_user"));
 let staffProfile = null;
 
+const user = JSON.parse(localStorage.getItem("bbms_user"));
 if (!user || user.role !== "HospitalStaff") {
     window.location.href = "../index.html";
 }
@@ -82,14 +77,12 @@ async function loadStaffProfile() {
     const res = await fetch(`${API_URL}/staff/${user.user_id}/profile`);
     const result = await res.json();
     staffProfile = result.data;
-
     document.getElementById("userInfo").textContent =
         `${user.full_name} - ${staffProfile.hospital_name}`;
 }
 
 async function loadInventory() {
     const filter = document.getElementById("filterType").value.toLowerCase();
-
     const res = await fetch(`${API_URL}/staff/${user.user_id}/inventory`);
     const result = await res.json();
 
@@ -101,7 +94,6 @@ async function loadInventory() {
 
     result.data.forEach(b => {
         if (filter && !b.blood_type.toLowerCase().includes(filter)) return;
-
         html += `
         <tr>
             <td>${b.blood_unit_id}</td>
@@ -139,74 +131,18 @@ async function editUnit(id) {
 
 async function deleteUnit(id) {
     if (!confirm("Delete this unit?")) return;
-
-    await fetch(`${API_URL}/blood-units/${id}`, {
-        method: "DELETE"
-    });
-
+    await fetch(`${API_URL}/blood-units/${id}`, { method: "DELETE" });
     loadInventory();
 }
-
-document.getElementById("bloodForm").addEventListener("submit", async e => {
-    e.preventDefault();
-
-    const response = await fetch(`${API_URL}/blood-units`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            hospital_id: staffProfile.hospital_id,
-            donor_id: document.getElementById("donor_id").value || null,
-            blood_type: document.getElementById("blood_type").value,
-            quantity_ml: document.getElementById("quantity_ml").value,
-            donation_date: document.getElementById("donation_date").value,
-            expiry_date: document.getElementById("expiry_date").value
-        })
-    });
-
-    const result = await response.json();
-
-    if (!result.success) {
-        alert("Error: " + (result.error || result.message || "Could not add blood unit"));
-        return;
-    }
-
-   alert("Blood unit added successfully");
-
-const form = document.getElementById("bloodForm");
-form.reset();
-
-["donor_id", "blood_type", "quantity_ml", "donation_date", "expiry_date"].forEach(id => {
-    const field = document.getElementById(id);
-    field.value = "";
-    field.defaultValue = "";
-});
-
-await loadInventory();});
-
-document.getElementById("donationForm").addEventListener("submit", async e => {
-    e.preventDefault();
-
-    await fetch(`${API_URL}/staff/register-donation`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            donor_id: document.getElementById("donor_id_donation").value,
-            staff_id: staffProfile.staff_id,
-            hospital_id: staffProfile.hospital_id,
-            blood_type: document.getElementById("blood_type_donation").value,
-            quantity_ml: document.getElementById("quantity_donation").value
-        })
-    });
-
-    alert("Donation registered!");
-    e.target.reset();
-    loadInventory();
-
-});
 
 async function loadRequests() {
     const res = await fetch(`${API_URL}/staff/${user.user_id}/requests`);
     const result = await res.json();
+
+    if (!result.data || result.data.length === 0) {
+        document.getElementById("requestsTable").innerHTML = "<p>No requests found.</p>";
+        return;
+    }
 
     let html = `<table>
         <tr>
@@ -215,6 +151,7 @@ async function loadRequests() {
         </tr>`;
 
     result.data.forEach(r => {
+        const isPending = r.status === "Pending";
         html += `
         <tr>
             <td>${r.request_id}</td>
@@ -223,8 +160,10 @@ async function loadRequests() {
             <td>${r.quantity_needed_ml}</td>
             <td>${r.status}</td>
             <td>
-                <button onclick="approve(${r.request_id})">Approve</button>
-                <button onclick="rejectReq(${r.request_id})">Reject</button>
+                ${isPending ? `
+                    <button onclick="approve(${r.request_id})">Approve</button>
+                    <button onclick="rejectReq(${r.request_id})">Reject</button>
+                ` : `<span style="color: gray; font-style: italic;">${r.status}</span>`}
             </td>
         </tr>`;
     });
@@ -235,8 +174,9 @@ async function loadRequests() {
 
 async function approve(id) {
     const unit = prompt("Enter matching blood unit ID:");
+    if (!unit) return;
 
-    await fetch(`${API_URL}/blood-requests/${id}/fulfill`, {
+    const res = await fetch(`${API_URL}/blood-requests/${id}/fulfill`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
@@ -245,6 +185,14 @@ async function approve(id) {
         })
     });
 
+    const result = await res.json();
+
+    if (!result.success) {
+        alert("Error: " + result.error);
+        return;
+    }
+
+    alert("Request fulfilled successfully!");
     loadRequests();
     loadInventory();
 }
@@ -268,9 +216,58 @@ async function init() {
     await loadStaffProfile();
     await loadInventory();
     await loadRequests();
+
+    document.getElementById("bloodForm").addEventListener("submit", async e => {
+        e.preventDefault();
+
+        const response = await fetch(`${API_URL}/blood-units`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                hospital_id: staffProfile.hospital_id,
+                donor_id: document.getElementById("donor_id").value || null,
+                blood_type: document.getElementById("blood_type").value,
+                quantity_ml: document.getElementById("quantity_ml").value,
+                donation_date: document.getElementById("donation_date").value,
+                expiry_date: document.getElementById("expiry_date").value
+            })
+        });
+
+        const result = await response.json();
+        if (!result.success) {
+            alert("Error: " + (result.error || result.message || "Could not add blood unit"));
+            return;
+        }
+
+        alert("Blood unit added successfully");
+        document.getElementById("bloodForm").reset();
+        await loadInventory();
+    });
+
+    document.getElementById("donationForm").addEventListener("submit", async e => {
+        e.preventDefault();
+
+        await fetch(`${API_URL}/staff/register-donation`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                donor_id: document.getElementById("donor_id_donation").value,
+                staff_id: staffProfile.staff_id,
+                hospital_id: staffProfile.hospital_id,
+                blood_type: document.getElementById("blood_type_donation").value,
+                quantity_ml: document.getElementById("quantity_donation").value
+            })
+        });
+
+        alert("Donation registered!");
+        e.target.reset();
+        loadInventory();
+    });
 }
 
-init();
+document.addEventListener("DOMContentLoaded", () => {
+    init();
+});
 </script>
 
 </body>

@@ -738,15 +738,30 @@ def fulfill_request(request_id):
     try:
         conn = get_connection()
         cursor = conn.cursor()
+
+        cursor.execute("SELECT status FROM bloodrequest WHERE request_id = %s", (request_id,))
+        row = cursor.fetchone()
+
+        print(f"[DEBUG] Request {request_id} - row: {row}")  # <-- add this
+
+        if not row:
+            return jsonify({"success": False, "error": "Request not found"}), 404
+
+        if row[0] != "Pending":
+            return jsonify({"success": False, "error": f"Request is already {row[0].lower()} and cannot be fulfilled"}), 400
+
         cursor.callproc("ProcessBloodRequest", [
             request_id,
             data.get("blood_unit_id"),
             data.get("staff_id")
         ])
+        for result in cursor.stored_results():
+            result.fetchall()
         conn.commit()
         return jsonify({"success": True, "message": "Blood request fulfilled"})
 
     except Error as e:
+        print(f"[DEBUG] Exception: {str(e)}")  # <-- and this
         return jsonify({"success": False, "error": str(e)}), 400
 
     finally:
