@@ -1,5 +1,5 @@
-const API_URL = "http://127.0.0.1:5000/api";
-
+//const API_URL = "http://127.0.0.1:5000/api";
+const API_URL = "https://blood-bank-management-system-production-0359.up.railway.app/api";
 const loginForm = document.getElementById("loginForm");
 
 if (loginForm) {
