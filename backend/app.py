@@ -146,7 +146,20 @@ def home():
 def test_db():
     return jsonify({"success": True, "tables": query_db("SHOW TABLES")})
 
-
+@app.route("/api/debug-db")
+def debug_db():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT DATABASE() AS db")
+        db = cursor.fetchall()
+        cursor.execute("SHOW TABLES")
+        tables = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify({"success": True, "database": db, "tables": tables})
+    except Error as e:
+        return jsonify({"success": False, "error": str(e)})
 # =====================================================
 # AUTH / LOGIN
 # =====================================================
