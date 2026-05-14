@@ -28,14 +28,14 @@ async function loadDonorProfile() {
         `${user.full_name} (${user.email})`;
 
     document.getElementById("profileBox").innerHTML = `
-        <table>
+        <table class="summary-table">
             <tr><th>Donor ID</th><td>${donorProfile.donor_id}</td></tr>
             <tr><th>Name</th><td>${donorProfile.full_name}</td></tr>
-            <tr><th>Blood Type</th><td>${donorProfile.blood_type}</td></tr>
-            <tr><th>Health Status</th><td>${donorProfile.health_status}</td></tr>
-            <tr><th>Weight</th><td>${donorProfile.weight_kg || ""}</td></tr>
-            <tr><th>Eligibility</th><td>${donorProfile.eligibility_status}</td></tr>
-            <tr><th>Last Donation</th><td>${donorProfile.last_donation_date || "No previous donation"}</td></tr>
+            <tr><th>Blood type</th><td><span class="status-pill">${donorProfile.blood_type}</span></td></tr>
+            <tr><th>Health</th><td>${donorProfile.health_status}</td></tr>
+            <tr><th>Weight</th><td>${donorProfile.weight_kg || "—"}</td></tr>
+            <tr><th>Eligibility</th><td><span class="status-pill">${donorProfile.eligibility_status}</span></td></tr>
+            <tr><th>Last donation</th><td>${donorProfile.last_donation_date || "No previous donation"}</td></tr>
         </table>
         `;
 
@@ -55,15 +55,14 @@ async function loadHospitals() {
     const result = await res.json();
 
     let html = `
-        <table>
-
-            <tr>
+        <div class="table-scroll">
+        <table class="data-table">
+            <thead><tr>
                 <th>ID</th>
                 <th>Hospital</th>
                 <th>Location</th>
                 <th>Contact</th>
-
-            </tr>
+            </tr></thead><tbody>
     `;
 
     result.data.forEach(h => {
@@ -80,7 +79,7 @@ async function loadHospitals() {
         `;
     });
 
-    html += `</table>`;
+    html += `</tbody></table></div>`;
     document.getElementById("hospitalsTable").innerHTML = html;
 }
 
@@ -132,14 +131,15 @@ async function loadAppointments() {
     const myAppointments = result.data.filter(a => a.donor_id === donorProfile.donor_id);
 
     let html = `
-        <table>
-            <tr>
+        <div class="table-scroll">
+        <table class="data-table">
+            <thead><tr>
                 <th>ID</th>
                 <th>Date/Time</th>
                 <th>Hospital</th>
                 <th>Status</th>
                 <th>Notes</th>
-            </tr>
+            </tr></thead><tbody>
     `;
 
     myAppointments.forEach(a => {
@@ -148,13 +148,13 @@ async function loadAppointments() {
                 <td>${a.appointment_id}</td>
                 <td>${a.appointment_datetime}</td>
                 <td>${a.hospital_name}</td>
-                <td>${a.status}</td>
+                <td><span class="status-pill">${a.status}</span></td>
                 <td>${a.notes || ""}</td>
             </tr>
         `;
     });
 
-    html += `</table>`;
+    html += `</tbody></table></div>`;
     document.getElementById("appointmentsTable").innerHTML = html;
 }
 
@@ -165,15 +165,16 @@ async function loadDonationHistory() {
     const result = await res.json();
 
     let html = `
-        <table>
-            <tr>
+        <div class="table-scroll">
+        <table class="data-table">
+            <thead><tr>
                 <th>Donation ID</th>
                 <th>Date</th>
-                <th>Blood Type</th>
+                <th>Blood type</th>
                 <th>Quantity</th>
                 <th>Hospital</th>
                 <th>Status</th>
-            </tr>
+            </tr></thead><tbody>
     `;
 
     result.data.forEach(d => {
@@ -184,12 +185,12 @@ async function loadDonationHistory() {
                 <td>${d.blood_type}</td>
                 <td>${d.quantity_ml}</td>
                 <td>${d.hospital_name}</td>
-                <td>${d.status}</td>
+                <td><span class="status-pill">${d.status}</span></td>
             </tr>
         `;
     });
 
-    html += `</table>`;
+    html += `</tbody></table></div>`;
     document.getElementById("historyTable").innerHTML = html;
 }
 
@@ -198,15 +199,16 @@ async function loadNotifications() {
     const result = await res.json();
 
    let html = `
-    <table>
-        <tr>
+    <div class="table-scroll">
+    <table class="data-table">
+        <thead><tr>
             <th>ID</th>
             <th>Message</th>
             <th>Type</th>
             <th>Date</th>
             <th>Read</th>
             <th>Action</th>
-        </tr>
+        </tr></thead><tbody>
 `;
 
    result.data.forEach(n => {
@@ -218,13 +220,13 @@ async function loadNotifications() {
             <td>${n.notification_date}</td>
             <td>${n.is_read ? "Yes" : "No"}</td>
             <td>
-                <button onclick="markNotificationRead(${n.notification_id})">Mark Read</button>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="markNotificationRead(${n.notification_id})">Mark read</button>
             </td>
         </tr>
     `;
 });
 
-    html += `</table>`;
+    html += `</tbody></table></div>`;
     document.getElementById("notificationsBox").innerHTML = html;
 }
 

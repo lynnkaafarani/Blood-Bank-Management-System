@@ -27,11 +27,11 @@ async function loadRecipientProfile() {
         `${user.full_name} (${user.email})`;
 
     document.getElementById("profileBox").innerHTML = `
-        <table>
+        <table class="summary-table">
             <tr><th>Recipient ID</th><td>${recipientProfile.recipient_id}</td></tr>
             <tr><th>Name</th><td>${recipientProfile.full_name}</td></tr>
-            <tr><th>Blood Type</th><td>${recipientProfile.blood_type}</td></tr>
-            <tr><th>Medical Condition</th><td>${recipientProfile.medical_condition || ""}</td></tr>
+            <tr><th>Blood type</th><td><span class="status-pill">${recipientProfile.blood_type}</span></td></tr>
+            <tr><th>Medical condition</th><td>${recipientProfile.medical_condition || "—"}</td></tr>
         </table>
     `;
 
@@ -76,17 +76,18 @@ async function loadBloodInventory() {
     const result = await res.json();
 
     let html = `
-        <table>
-            <tr>
+        <div class="table-scroll">
+        <table class="data-table">
+            <thead><tr>
                 <th>Unit ID</th>
-                <th>Blood Type</th>
+                <th>Blood type</th>
                 <th>Quantity</th>
                 <th>Status</th>
                 <th>Hospital ID</th>
                 <th>Hospital</th>
                 <th>Location</th>
                 <th>Expiry</th>
-            </tr>
+            </tr></thead><tbody>
     `;
 
     result.data.forEach(b => {
@@ -100,7 +101,7 @@ async function loadBloodInventory() {
                 <td>${b.blood_unit_id}</td>
                 <td>${b.blood_type}</td>
                 <td>${b.quantity_ml}</td>
-                <td>${b.status}</td>
+                <td><span class="status-pill">${b.status}</span></td>
                 <td>${b.hospital_id}</td>
                 <td>${b.hospital_name}</td>
                 <td>${b.location}</td>
@@ -109,7 +110,7 @@ async function loadBloodInventory() {
         `;
     });
 
-    html += `</table>`;
+    html += `</tbody></table></div>`;
     document.getElementById("inventoryTable").innerHTML = html;
 }
 
@@ -156,17 +157,18 @@ async function loadMyRequests() {
     const myRequests = result.data.filter(r => r.recipient_id === recipientProfile.recipient_id);
 
     let html = `
-        <table>
-            <tr>
+        <div class="table-scroll">
+        <table class="data-table">
+            <thead><tr>
                 <th>Request ID</th>
-                <th>Blood Type</th>
+                <th>Blood type</th>
                 <th>Quantity</th>
                 <th>Priority</th>
                 <th>Status</th>
                 <th>Hospital</th>
                 <th>Date</th>
                 <th>Action</th>
-            </tr>
+            </tr></thead><tbody>
     `;
 
     myRequests.forEach(r => {
@@ -175,20 +177,20 @@ async function loadMyRequests() {
                 <td>${r.request_id}</td>
                 <td>${r.blood_type}</td>
                 <td>${r.quantity_needed_ml}</td>
-                <td>${r.priority_level}</td>
-                <td>${r.status}</td>
+                <td><span class="status-pill">${r.priority_level}</span></td>
+                <td><span class="status-pill">${r.status}</span></td>
                 <td>${r.hospital_name}</td>
                 <td>${r.request_date}</td>
                 <td>
                     ${r.status === "Pending"
-                        ? `<button onclick="cancelRequest(${r.request_id})">Cancel</button>`
+                        ? `<button type="button" class="btn btn-sm btn-danger" onclick="cancelRequest(${r.request_id})">Cancel</button>`
                         : ""}
                 </td>
             </tr>
         `;
     });
 
-    html += `</table>`;
+    html += `</tbody></table></div>`;
     document.getElementById("requestsTable").innerHTML = html;
 }
 
@@ -208,15 +210,16 @@ async function loadNotifications() {
     const result = await res.json();
 
     let html = `
-        <table>
-            <tr>
+        <div class="table-scroll">
+        <table class="data-table">
+            <thead><tr>
                 <th>ID</th>
                 <th>Message</th>
                 <th>Type</th>
                 <th>Date</th>
                 <th>Read</th>
                 <th>Action</th>
-            </tr>
+            </tr></thead><tbody>
     `;
 
     result.data.forEach(n => {
@@ -228,13 +231,13 @@ async function loadNotifications() {
                 <td>${n.notification_date}</td>
                 <td>${n.is_read ? "Yes" : "No"}</td>
                 <td>
-                    <button onclick="markNotificationRead(${n.notification_id})">Mark Read</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="markNotificationRead(${n.notification_id})">Mark read</button>
                 </td>
             </tr>
         `;
     });
 
-    html += `</table>`;
+    html += `</tbody></table></div>`;
     document.getElementById("notificationsBox").innerHTML = html;
 }
 

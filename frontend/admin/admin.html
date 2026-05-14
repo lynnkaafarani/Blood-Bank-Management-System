@@ -2,68 +2,82 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Dashboard - BBMS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0a0e12">
+    <title>Admin — BBMS</title>
     <link rel="stylesheet" href="../styles.css">
 </head>
-<body>
+<body class="page-app role-admin">
 
 <header class="topbar">
-    <h1>BBMS Admin Dashboard</h1>
-    <button onclick="logout()">Logout</button>
+    <div class="app-header-inner">
+        <div class="app-title-block">
+            <span class="header-logo" aria-hidden="true"></span>
+            <h1>Administration</h1>
+            <span class="role-badge">Admin</span>
+        </div>
+        <div class="app-header-actions">
+            <button type="button" class="btn btn-ghost" onclick="logout()">Log out</button>
+        </div>
+    </div>
 </header>
 
-<main class="dashboard">
+<main class="app-main">
+    <div class="layout-grid cols-2">
 
-    <section class="card">
-        <h2>Logged-in Admin</h2>
+    <section class="card span-2">
+        <h2>Signed in</h2>
         <p id="userInfo"></p>
     </section>
 
-    <section class="card">
-        <h2>System Users</h2>
-        <div id="usersTable">Loading users...</div>
+    <section class="card span-2">
+        <h2>System users</h2>
+        <div id="usersTable">Loading users…</div>
     </section>
 
-    <section class="card">
+    <section class="card span-2">
         <h2>Hospitals</h2>
 
         <form id="hospitalForm" class="form-row">
             <input type="text" id="hospitalName" placeholder="Hospital name" required>
             <input type="text" id="hospitalLocation" placeholder="Location" required>
             <input type="text" id="hospitalContact" placeholder="Contact info" required>
-            <button type="submit">Add Hospital</button>
+            <button type="submit" class="btn btn-primary">Add hospital</button>
         </form>
 
-        <div id="hospitalsTable">Loading hospitals...</div>
-    </section>
-<section class="card">
-    <h2>Hospital Staff Management</h2>
-
-    <form id="staffForm" class="form-row">
-        <input type="text" id="staffFirstName" placeholder="First name" required>
-        <input type="text" id="staffLastName" placeholder="Last name" required>
-        <input type="number" id="staffAge" placeholder="Age" required>
-       <select id="staffGender" required>
-    <option value="">Select Gender</option>
-    <option value="Male">Male</option>
-    <option value="Female">Female</option>
-    <option value="Other">Other</option>
-</select>
-        <input type="email" id="staffEmail" placeholder="Email" required>
-        <input type="text" id="staffPhone" placeholder="Phone" required>
-        <input type="password" id="staffPassword" placeholder="Password" required>
-        <input type="number" id="staffHospitalId" placeholder="Hospital ID" required>
-        <input type="text" id="staffRole" placeholder="Staff role" required>
-        <button type="submit">Create Staff</button>
-    </form>
-
-    <div id="staffTable">Loading staff...</div>
-</section>
-    <section class="card">
-        <h2>Activity Logs</h2>
-        <div id="logsTable">Loading logs...</div>
+        <div id="hospitalsTable">Loading hospitals…</div>
     </section>
 
+    <section class="card span-2">
+        <h2>Hospital staff</h2>
+
+        <form id="staffForm" class="form-row">
+            <input type="text" id="staffFirstName" placeholder="First name" required>
+            <input type="text" id="staffLastName" placeholder="Last name" required>
+            <input type="number" id="staffAge" placeholder="Age" required>
+            <select id="staffGender" required>
+                <option value="">Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select>
+            <input type="email" id="staffEmail" placeholder="Email" required>
+            <input type="text" id="staffPhone" placeholder="Phone" required>
+            <input type="password" id="staffPassword" placeholder="Password" required>
+            <input type="number" id="staffHospitalId" placeholder="Hospital ID" required>
+            <input type="text" id="staffRole" placeholder="Staff role" required>
+            <button type="submit" class="btn btn-primary">Create staff</button>
+        </form>
+
+        <div id="staffTable">Loading staff…</div>
+    </section>
+
+    <section class="card span-2">
+        <h2>Activity logs</h2>
+        <div id="logsTable">Loading logs…</div>
+    </section>
+
+    </div>
 </main>
 
 <script>
@@ -75,7 +89,7 @@ if (!user || user.role !== "Administrator") {
 }
 
 document.getElementById("userInfo").textContent =
-    `${user.full_name} (${user.email}) - ${user.role}`;
+    `${user.full_name} (${user.email}) — ${user.role}`;
 
 function logout() {
     localStorage.removeItem("bbms_user");
@@ -87,14 +101,15 @@ async function loadUsers() {
     const result = await res.json();
 
     let html = `
-        <table>
-            <tr>
+        <div class="table-scroll">
+        <table class="data-table">
+            <thead><tr>
                 <th>ID</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
                 <th>Status</th>
-            </tr>
+            </tr></thead><tbody>
     `;
 
     result.data.forEach(u => {
@@ -104,12 +119,12 @@ async function loadUsers() {
                 <td>${u.first_name} ${u.last_name}</td>
                 <td>${u.email}</td>
                 <td>${u.role}</td>
-                <td>${u.account_status}</td>
+                <td><span class="status-pill">${u.account_status}</span></td>
             </tr>
         `;
     });
 
-    html += `</table>`;
+    html += `</tbody></table></div>`;
     document.getElementById("usersTable").innerHTML = html;
 }
 
@@ -118,13 +133,14 @@ async function loadHospitals() {
     const result = await res.json();
 
     let html = `
-        <table>
-            <tr>
+        <div class="table-scroll">
+        <table class="data-table">
+            <thead><tr>
                 <th>ID</th>
                 <th>Hospital</th>
                 <th>Location</th>
                 <th>Contact</th>
-            </tr>
+            </tr></thead><tbody>
     `;
 
     result.data.forEach(h => {
@@ -138,7 +154,7 @@ async function loadHospitals() {
         `;
     });
 
-    html += `</table>`;
+    html += `</tbody></table></div>`;
     document.getElementById("hospitalsTable").innerHTML = html;
 }
 
@@ -147,14 +163,15 @@ async function loadLogs() {
     const result = await res.json();
 
     let html = `
-        <table>
-            <tr>
+        <div class="table-scroll">
+        <table class="data-table">
+            <thead><tr>
                 <th>ID</th>
                 <th>Action</th>
                 <th>Entity</th>
                 <th>Description</th>
                 <th>Date</th>
-            </tr>
+            </tr></thead><tbody>
     `;
 
     result.data.forEach(log => {
@@ -169,7 +186,7 @@ async function loadLogs() {
         `;
     });
 
-    html += `</table>`;
+    html += `</tbody></table></div>`;
     document.getElementById("logsTable").innerHTML = html;
 }
 
@@ -191,21 +208,23 @@ document.getElementById("hospitalForm").addEventListener("submit", async functio
     this.reset();
     loadHospitals();
 });
+
 async function loadStaff() {
     const res = await fetch(`${API_URL}/admin/staff`);
     const result = await res.json();
 
     let html = `
-        <table>
-            <tr>
+        <div class="table-scroll">
+        <table class="data-table">
+            <thead><tr>
                 <th>Staff ID</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Hospital</th>
                 <th>Role</th>
                 <th>Status</th>
-                <th>Action</th>
-            </tr>
+                <th>Actions</th>
+            </tr></thead><tbody>
     `;
 
     result.data.forEach(s => {
@@ -216,17 +235,17 @@ async function loadStaff() {
                 <td>${s.email}</td>
                 <td>${s.hospital_name}</td>
                 <td>${s.staff_role}</td>
-                <td>${s.account_status}</td>
+                <td><span class="status-pill">${s.account_status}</span></td>
                 <td>
-                    <button onclick="setStaffStatus(${s.user_id}, 'Active')">Activate</button>
-                    <button onclick="setStaffStatus(${s.user_id}, 'Inactive')">Deactivate</button>
-                    <button onclick="deleteStaff(${s.staff_id})">Delete</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="setStaffStatus(${s.user_id}, 'Active')">Activate</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="setStaffStatus(${s.user_id}, 'Inactive')">Deactivate</button>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteStaff(${s.staff_id})">Delete</button>
                 </td>
             </tr>
         `;
     });
 
-    html += `</table>`;
+    html += `</tbody></table></div>`;
     document.getElementById("staffTable").innerHTML = html;
 }
 
@@ -286,6 +305,7 @@ async function deleteStaff(staffId) {
     loadStaff();
     loadUsers();
 }
+
 loadUsers();
 loadHospitals();
 loadStaff();

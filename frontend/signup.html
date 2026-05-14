@@ -2,50 +2,70 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>BBMS Sign Up</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0a0e12">
+    <title>Register — BBMS</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="page-auth">
 
-<div class="login-container">
-    <div class="login-card">
+<div class="auth-shell">
+    <aside class="auth-brand">
+        <div>
+            <div class="brand-mark">
+                <span class="drop" aria-hidden="true"><span>✶</span></span>
+                <span>BBMS</span>
+            </div>
+            <h2 class="brand-tagline">Join the <em>lifeline</em>.</h2>
+            <p class="brand-desc">Register as a donor or recipient. Hospital staff accounts are created by an administrator.</p>
+        </div>
+        <div class="auth-stats">
+            <span class="stat-pill">Donor scheduling</span>
+            <span class="stat-pill">Blood requests</span>
+            <span class="stat-pill">Eligibility aware</span>
+        </div>
+    </aside>
 
-        <h1>Create Account</h1>
+    <div class="auth-panel">
+        <div class="auth-card-inner">
+            <h1>Create your account</h1>
+            <p class="auth-sub">Fill in your details. Extra fields apply depending on whether you register as a donor or recipient.</p>
 
-        <form id="signupForm">
-            <input type="text" id="signupFirstName" placeholder="First name" required>
-            <input type="text" id="signupLastName" placeholder="Last name" required>
-            <input type="number" id="signupAge" placeholder="Age" required>
+            <form id="signupForm" class="signup-stack">
+                <input type="text" id="signupFirstName" placeholder="First name" required>
+                <input type="text" id="signupLastName" placeholder="Last name" required>
+                <input type="number" id="signupAge" placeholder="Age" required min="1" max="120">
 
-            <select id="signupGender" required>
-                <option value="">Gender</option>
-                <option>Male</option>
-                <option>Female</option>
-                <option>Other</option>
-            </select>
+                <select id="signupGender" required>
+                    <option value="">Gender</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                </select>
 
-            <input type="email" id="signupEmail" placeholder="Email" required>
-            <input type="password" id="signupPassword" placeholder="Password" required>
-            <input type="text" id="signupPhone" placeholder="Phone" required>
+                <input type="email" id="signupEmail" placeholder="Email" autocomplete="email" required>
+                <input type="password" id="signupPassword" placeholder="Password" autocomplete="new-password" required>
+                <input type="text" id="signupPhone" placeholder="Phone" required>
 
-            <select id="signupRole" required>
-                <option value="">Register as</option>
-                <option value="Donor">Donor</option>
-                <option value="Recipient">Recipient</option>
-            </select>
+                <select id="signupRole" required>
+                    <option value="">Register as</option>
+                    <option value="Donor">Donor</option>
+                    <option value="Recipient">Recipient</option>
+                </select>
 
-            <input type="text" id="signupBloodType" placeholder="Blood type e.g. O+" required>
-            <input type="number" id="signupWeight" placeholder="Weight kg - donor only">
-            <input type="text" id="signupCondition" placeholder="Medical condition - recipient only">
+                <input type="text" id="signupBloodType" placeholder="Blood type (e.g. O+)" required>
+                <input type="number" id="signupWeight" placeholder="Weight (kg) — donors only" min="1">
+                <input type="text" id="signupCondition" placeholder="Medical condition — recipients only">
 
-            <button type="submit">Sign Up</button>
-        </form>
+                <p class="field-hint">Donors: include weight. Recipients: include condition when relevant.</p>
 
-        <p style="margin-top:15px;">
-            Already have an account?
-            <a href="index.html">Login</a>
-        </p>
+                <button type="submit" class="btn btn-primary">Sign up</button>
+            </form>
 
+            <p class="auth-footer">
+                Already registered? <a href="index.html">Back to sign in</a>
+            </p>
+        </div>
     </div>
 </div>
 

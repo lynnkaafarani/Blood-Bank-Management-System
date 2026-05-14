@@ -2,45 +2,55 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Recipient Dashboard - BBMS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0a0e12">
+    <title>Recipient — BBMS</title>
     <link rel="stylesheet" href="../styles.css">
 </head>
-<body>
+<body class="page-app role-recipient">
 
 <header class="topbar">
-    <h1>Recipient Dashboard</h1>
-    <button onclick="logout()">Logout</button>
+    <div class="app-header-inner">
+        <div class="app-title-block">
+            <span class="header-logo" aria-hidden="true"></span>
+            <h1>Recipient care</h1>
+            <span class="role-badge">Recipient</span>
+        </div>
+        <div class="app-header-actions">
+            <button type="button" class="btn btn-ghost" onclick="logout()">Log out</button>
+        </div>
+    </div>
 </header>
 
-<main class="dashboard">
+<main class="app-main">
+    <div class="layout-grid cols-2">
 
-    <section class="card">
-        <h2>Logged-in Recipient</h2>
+    <section class="card span-2">
+        <h2>Welcome</h2>
         <p id="userInfo"></p>
     </section>
 
     <section class="card">
-        <h2>My Profile</h2>
-        <div id="profileBox">Loading profile...</div>
+        <h2>Your profile</h2>
+        <div id="profileBox">Loading profile…</div>
     </section>
 
     <section class="card">
-        <h2>Update My Profile</h2>
+        <h2>Update profile</h2>
         <form id="profileForm" class="form-row">
             <input type="text" id="updateFirstName" placeholder="First name" required>
             <input type="text" id="updateLastName" placeholder="Last name" required>
             <input type="text" id="updatePhone" placeholder="Phone" required>
             <input type="text" id="updateCondition" placeholder="Medical condition">
-            <button type="submit">Update Profile</button>
+            <button type="submit" class="btn btn-primary">Save changes</button>
         </form>
     </section>
 
-    <section class="card">
-        <h2>Search Available Blood</h2>
-
+    <section class="card span-2">
+        <h2>Available blood</h2>
         <div class="form-row">
-            <input type="text" id="filterBloodType" placeholder="Blood type e.g. O+">
-            <input type="text" id="filterLocation" placeholder="Location e.g. Beirut">
+            <input type="text" id="filterBloodType" placeholder="Blood type (e.g. O+)">
+            <input type="text" id="filterLocation" placeholder="Location">
             <input type="date" id="filterDate" min="">
             <select id="filterStatus">
                 <option value="">All statuses</option>
@@ -49,38 +59,39 @@
                 <option value="Used">Used</option>
                 <option value="Expired">Expired</option>
             </select>
-            <button onclick="loadBloodInventory()">Search</button>
+            <button type="button" class="btn btn-secondary" onclick="loadBloodInventory()">Search</button>
         </div>
-
-        <div id="inventoryTable">Loading inventory...</div>
+        <p class="inline-note">Expiry filter hides units expiring before the selected date.</p>
+        <div id="inventoryTable">Loading inventory…</div>
     </section>
 
     <section class="card">
-        <h2>Submit Blood Request</h2>
+        <h2>Submit blood request</h2>
         <form id="requestForm" class="form-row">
             <input type="number" id="requestHospitalId" placeholder="Hospital ID" required>
-            <input type="text" id="requestBloodType" placeholder="Blood Type" required>
-            <input type="number" id="requestQuantity" placeholder="Quantity ml" required>
+            <input type="text" id="requestBloodType" placeholder="Blood type" required>
+            <input type="number" id="requestQuantity" placeholder="Quantity (ml)" required>
             <select id="requestPriority">
-                <option value="Medium">Medium</option>
+                <option value="Medium">Medium priority</option>
                 <option value="Low">Low</option>
                 <option value="High">High</option>
                 <option value="Critical">Critical</option>
             </select>
-            <button type="submit">Submit Request</button>
+            <button type="submit" class="btn btn-primary">Submit request</button>
         </form>
     </section>
 
     <section class="card">
-        <h2>My Blood Requests</h2>
-        <div id="requestsTable">Loading requests...</div>
+        <h2>Your requests</h2>
+        <div id="requestsTable">Loading requests…</div>
     </section>
 
-    <section class="card">
+    <section class="card span-2">
         <h2>Notifications</h2>
-        <div id="notificationsBox">Loading notifications...</div>
+        <div id="notificationsBox">Loading notifications…</div>
     </section>
 
+    </div>
 </main>
 
 <script src="recipient.js"></script>

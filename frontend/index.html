@@ -2,36 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>BBMS Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0a0e12">
+    <title>Sign in — BBMS</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="page-auth">
 
-<div class="login-container">
-    <div class="login-card">
-        <h1>Blood Bank Management System</h1>
-        <p>SRS Version - Role Based Access</p>
+<div class="auth-shell">
+    <aside class="auth-brand">
+        <div>
+            <div class="brand-mark">
+                <span class="drop" aria-hidden="true"><span>✶</span></span>
+                <span>BBMS</span>
+            </div>
+            <h2 class="brand-tagline">Every drop <em>counts</em>.</h2>
+            <p class="brand-desc">Secure role-based access for administrators, hospital staff, donors, and recipients.</p>
+        </div>
+        <div class="auth-stats">
+            <span class="stat-pill">Traceable inventory</span>
+            <span class="stat-pill">Hospital network</span>
+            <span class="stat-pill">Live requests</span>
+        </div>
+    </aside>
 
-        <form id="loginForm">
-            <label>Email</label>
-            <input type="email" id="email" required>
+    <div class="auth-panel">
+        <div class="auth-card-inner">
+            <h1>Welcome back</h1>
+            <p class="auth-sub">Sign in with your email and password to continue.</p>
 
-            <label>Password</label>
-            <input type="password" id="password" required>
+            <form id="loginForm">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" autocomplete="username" required>
 
-            <button type="submit">Login</button>
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" autocomplete="current-password" required>
 
-        </form>
+                <button type="submit" class="btn btn-primary">Sign in</button>
+            </form>
 
-        <div id="message"></div>
-        <hr>
+            <div id="message" role="status" aria-live="polite"></div>
 
-<p>
-    Don’t have an account?
-    <a href="signup.html">Sign up</a>
-</p>
-
-
+            <p class="auth-footer">
+                New here? <a href="signup.html">Create an account</a>
+            </p>
+        </div>
     </div>
 </div>
 

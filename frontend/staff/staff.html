@@ -2,61 +2,76 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Staff Dashboard - BBMS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0a0e12">
+    <title>Hospital staff — BBMS</title>
     <link rel="stylesheet" href="../styles.css">
 </head>
-<body>
+<body class="page-app role-staff">
 
 <header class="topbar">
-    <h1>Hospital Staff Dashboard</h1>
-    <button onclick="logout()">Logout</button>
+    <div class="app-header-inner">
+        <div class="app-title-block">
+            <span class="header-logo" aria-hidden="true"></span>
+            <h1>Hospital operations</h1>
+            <span class="role-badge">Staff</span>
+        </div>
+        <div class="app-header-actions">
+            <button type="button" class="btn btn-ghost" onclick="logout()">Log out</button>
+        </div>
+    </div>
 </header>
 
-<main class="dashboard">
+<main class="app-main">
+    <div class="layout-grid cols-2">
 
-    <section class="card">
-        <h2>Logged-in Staff</h2>
+    <section class="card span-2">
+        <h2>Your session</h2>
         <p id="userInfo"></p>
     </section>
 
     <section class="card">
-        <h2>Filter Inventory</h2>
-        <input type="text" id="filterType" placeholder="Blood type (A+, O-...)">
-        <button onclick="loadInventory()">Apply Filter</button>
+        <h2>Inventory filter</h2>
+        <div class="toolbar">
+            <input type="text" id="filterType" placeholder="Blood type (A+, O−…)">
+            <button type="button" class="btn btn-secondary" onclick="loadInventory()">Apply filter</button>
+        </div>
+        <p class="inline-note">Leave blank to list all units for your hospital.</p>
     </section>
 
     <section class="card">
-        <h2>Blood Inventory</h2>
-        <div id="inventoryTable">Loading...</div>
+        <h2>Blood inventory</h2>
+        <div id="inventoryTable">Loading…</div>
     </section>
 
     <section class="card">
-        <h2>Add Blood Unit</h2>
+        <h2>Add blood unit</h2>
         <form id="bloodForm" class="form-row" autocomplete="off">
-            <input type="number" id="donor_id" placeholder="Donor ID">
-            <input type="text" id="blood_type" placeholder="Blood Type" required>
-            <input type="number" id="quantity_ml" placeholder="Quantity ml" required>
+            <input type="number" id="donor_id" placeholder="Donor ID (optional)">
+            <input type="text" id="blood_type" placeholder="Blood type" required>
+            <input type="number" id="quantity_ml" placeholder="Quantity (ml)" required>
             <input type="date" id="donation_date" required>
             <input type="date" id="expiry_date" required>
-            <button type="submit">Add</button>
+            <button type="submit" class="btn btn-primary">Add unit</button>
         </form>
     </section>
 
     <section class="card">
-        <h2>Register Donation</h2>
+        <h2>Register donation</h2>
         <form id="donationForm" class="form-row">
             <input type="number" id="donor_id_donation" placeholder="Donor ID" required>
-            <input type="text" id="blood_type_donation" placeholder="Blood Type" required>
-            <input type="number" id="quantity_donation" placeholder="Quantity ml" required>
-            <button type="submit">Register</button>
+            <input type="text" id="blood_type_donation" placeholder="Blood type" required>
+            <input type="number" id="quantity_donation" placeholder="Quantity (ml)" required>
+            <button type="submit" class="btn btn-primary">Register</button>
         </form>
     </section>
 
-    <section class="card">
-        <h2>Blood Requests</h2>
-        <div id="requestsTable">Loading...</div>
+    <section class="card span-2">
+        <h2>Blood requests</h2>
+        <div id="requestsTable">Loading…</div>
     </section>
 
+    </div>
 </main>
 
 <script>
@@ -78,7 +93,7 @@ async function loadStaffProfile() {
     const result = await res.json();
     staffProfile = result.data;
     document.getElementById("userInfo").textContent =
-        `${user.full_name} - ${staffProfile.hospital_name}`;
+        `${user.full_name} — ${staffProfile.hospital_name}`;
 }
 
 async function loadInventory() {
@@ -86,11 +101,11 @@ async function loadInventory() {
     const res = await fetch(`${API_URL}/staff/${user.user_id}/inventory`);
     const result = await res.json();
 
-    let html = `<table>
-        <tr>
+    let html = `<div class="table-scroll"><table class="data-table">
+        <thead><tr>
             <th>ID</th><th>Type</th><th>Qty</th><th>Status</th>
             <th>Expiry</th><th>Actions</th>
-        </tr>`;
+        </tr></thead><tbody>`;
 
     result.data.forEach(b => {
         if (filter && !b.blood_type.toLowerCase().includes(filter)) return;
@@ -99,16 +114,16 @@ async function loadInventory() {
             <td>${b.blood_unit_id}</td>
             <td>${b.blood_type}</td>
             <td>${b.quantity_ml}</td>
-            <td>${b.status}</td>
+            <td><span class="status-pill">${b.status}</span></td>
             <td>${b.expiry_date}</td>
             <td>
-                <button onclick="editUnit(${b.blood_unit_id})">Edit</button>
-                <button onclick="deleteUnit(${b.blood_unit_id})">Delete</button>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="editUnit(${b.blood_unit_id})">Edit</button>
+                <button type="button" class="btn btn-sm btn-danger" onclick="deleteUnit(${b.blood_unit_id})">Delete</button>
             </td>
         </tr>`;
     });
 
-    html += "</table>";
+    html += "</tbody></table></div>";
     document.getElementById("inventoryTable").innerHTML = html;
 }
 
@@ -140,15 +155,15 @@ async function loadRequests() {
     const result = await res.json();
 
     if (!result.data || result.data.length === 0) {
-        document.getElementById("requestsTable").innerHTML = "<p>No requests found.</p>";
+        document.getElementById("requestsTable").innerHTML = "<p class=\"muted\">No requests found.</p>";
         return;
     }
 
-    let html = `<table>
-        <tr>
+    let html = `<div class="table-scroll"><table class="data-table">
+        <thead><tr>
             <th>ID</th><th>Recipient</th><th>Type</th>
             <th>Qty</th><th>Status</th><th>Action</th>
-        </tr>`;
+        </tr></thead><tbody>`;
 
     result.data.forEach(r => {
         const isPending = r.status === "Pending";
@@ -158,17 +173,17 @@ async function loadRequests() {
             <td>${r.recipient_name}</td>
             <td>${r.blood_type}</td>
             <td>${r.quantity_needed_ml}</td>
-            <td>${r.status}</td>
+            <td><span class="status-pill">${r.status}</span></td>
             <td>
                 ${isPending ? `
-                    <button onclick="approve(${r.request_id})">Approve</button>
-                    <button onclick="rejectReq(${r.request_id})">Reject</button>
-                ` : `<span style="color: gray; font-style: italic;">${r.status}</span>`}
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="approve(${r.request_id})">Approve</button>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="rejectReq(${r.request_id})">Reject</button>
+                ` : `<span class="muted">${r.status}</span>`}
             </td>
         </tr>`;
     });
 
-    html += "</table>";
+    html += "</tbody></table></div>";
     document.getElementById("requestsTable").innerHTML = html;
 }
 
