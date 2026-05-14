@@ -160,6 +160,15 @@ def debug_db():
         return jsonify({"success": True, "database": db, "tables": tables})
     except Error as e:
         return jsonify({"success": False, "error": str(e)})
+
+@app.route("/api/debug-config")
+def debug_config():
+    return jsonify({
+        "DB_HOST": Config.DB_HOST,
+        "DB_PORT": Config.DB_PORT,
+        "DB_NAME": Config.DB_NAME,
+        "DB_USER": Config.DB_USER
+    })
 # =====================================================
 # AUTH / LOGIN
 # =====================================================
