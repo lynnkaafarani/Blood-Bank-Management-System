@@ -145,7 +145,7 @@ if (signupForm) {
                 document.getElementById("signupCondition").value;
 
         }else if (result.user.role === "MinistryOfHealth") {
-    window.location.href = "ministry/ministry.html";
+    window.location.href = "moh/ministry.html";
 }
         else {
 
