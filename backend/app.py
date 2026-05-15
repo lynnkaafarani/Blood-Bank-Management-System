@@ -394,18 +394,6 @@ def add_hospital():
 # =====================================================
 # DONORS
 # =====================================================
-
-@app.route("/api/donors/<int:donor_id>/history")
-def donor_history(donor_id):
-    return jsonify({
-        "success": True,
-        "data": query_db("""
-            SELECT *
-            FROM vw_donation_history
-            WHERE donor_id = %s
-            ORDER BY donation_date DESC
-        """, (donor_id,))
-    })
 @app.route("/api/donors/by-user/<int:user_id>")
 def get_donor_by_user(user_id):
     data = query_db("""
@@ -420,6 +408,17 @@ def get_donor_by_user(user_id):
     if not data:
         return jsonify({"success": False, "message": "Donor not found"}), 404
     return jsonify({"success": True, "data": data[0]})
+@app.route("/api/donors/<int:donor_id>/history")
+def donor_history(donor_id):
+    return jsonify({
+        "success": True,
+        "data": query_db("""
+            SELECT *
+            FROM vw_donation_history
+            WHERE donor_id = %s
+            ORDER BY donation_date DESC
+        """, (donor_id,))
+    })
 
 @app.route("/api/donors/register", methods=["POST"])
 def register_donor():
