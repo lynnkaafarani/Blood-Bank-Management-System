@@ -24,11 +24,6 @@ def is_valid_email(email: str) -> bool:
 
 
 def clean_phone(phone) -> str | None:
-    """
-    Normalise a Lebanese phone number to its bare 8-digit form.
-    Accepts: +961XXXXXXXX / 961XXXXXXXX / 0XXXXXXXX / XXXXXXXX
-    Returns None when the number is missing or malformed.
-    """
     if not phone:
         return None
     phone = str(phone).strip().replace(" ", "").replace("-", "")
@@ -137,7 +132,6 @@ def check_donor_eligibility(donor):
     return True, "Eligible"
 
 def email_exists(email: str, role: str, exclude_user_id: int = None) -> bool:
-    """True if email is already taken within the same role."""
     sql = "SELECT 1 FROM UserAccount WHERE email = %s AND role = %s"
     params = [email, role]
     if exclude_user_id is not None:
@@ -147,7 +141,6 @@ def email_exists(email: str, role: str, exclude_user_id: int = None) -> bool:
 
 
 def phone_exists(phone: str, role: str, exclude_user_id: int = None) -> bool:
-    """True if phone (8-digit normalised) is already taken within the same role."""
     sql = "SELECT 1 FROM UserAccount WHERE phone = %s AND role = %s"
     params = [phone, role]
     if exclude_user_id is not None:
@@ -192,6 +185,8 @@ def debug_config():
         "DB_NAME": Config.DB_NAME,
         "DB_USER": Config.DB_USER
     })
+
+
 # =====================================================
 # AUTH / LOGIN
 # =====================================================
@@ -201,7 +196,6 @@ def login():
     data = request.json or {}
     email = data.get("email", "").strip().lower()
     password = data.get("password")
-
 
     user = query_db("""
         SELECT user_id, first_name, last_name, email, role, password_hash,
@@ -225,7 +219,6 @@ def login():
         return jsonify({"success": False, "message": "Account is not active"}), 403
 
     if not check_password_hash(user["password_hash"], password):
-
         failed_attempts = (user["failed_login_attempts"] or 0) + 1
 
         if failed_attempts >= 5:
@@ -271,9 +264,11 @@ def login():
         }
     })
 
+
 # =====================================================
 # ADMIN REQUIREMENTS
 # =====================================================
+
 @app.route("/api/users")
 def get_users():
     return jsonify({
@@ -308,15 +303,17 @@ def get_activity_logs():
             ORDER BY created_at DESC
         """)
     })
+
+
 def record_log(user_id, action_type, entity_type, entity_id, description):
     if not user_id:
         return
-
     query_db("""
         INSERT INTO ActivityLog
         (user_id, action_type, entity_type, entity_id, description)
         VALUES (%s, %s, %s, %s, %s)
     """, (user_id, action_type, entity_type, entity_id, description), fetch=False)
+
 
 @app.route("/api/admin/staff/<int:staff_id>", methods=["PUT"])
 def update_staff(staff_id):
@@ -348,17 +345,11 @@ def update_staff(staff_id):
     ), fetch=False)
 
     record_log(
-        data.get("admin_user_id"),
-        "UPDATE",
-        "HospitalStaff",
-        staff_id,
-        "Staff account updated"
+        data.get("admin_user_id"), "UPDATE", "HospitalStaff", staff_id, "Staff account updated"
     )
 
-    return jsonify({
-        "success": True,
-        "message": "Staff updated successfully"
-    })
+    return jsonify({"success": True, "message": "Staff updated successfully"})
+
 
 @app.route("/api/admin/unlock-user/<int:user_id>", methods=["PUT"])
 def unlock_user(user_id):
@@ -373,11 +364,7 @@ def unlock_user(user_id):
     """, (user_id,), fetch=False)
 
     record_log(
-        data.get("admin_user_id"),
-        "UPDATE",
-        "UserAccount",
-        user_id,
-        "User account unlocked"
+        data.get("admin_user_id"), "UPDATE", "UserAccount", user_id, "User account unlocked"
     )
 
     return jsonify({"success": True, "message": "User account unlocked successfully"})
@@ -397,10 +384,7 @@ def add_hospital():
     ), fetch=False)
 
     record_log(
-        data.get("admin_user_id"),
-        "CREATE",
-        "Hospital",
-        hospital_id,
+        data.get("admin_user_id"), "CREATE", "Hospital", hospital_id,
         f"Hospital created: {data.get('hospital_name')}"
     )
 
@@ -410,8 +394,6 @@ def add_hospital():
 # =====================================================
 # DONORS
 # =====================================================
-
-
 
 @app.route("/api/donors/<int:donor_id>/history")
 def donor_history(donor_id):
@@ -426,24 +408,19 @@ def donor_history(donor_id):
     })
 
 
-# ── /register MUST come before /<int:donor_id> so Flask matches it correctly ──
-
 @app.route("/api/donors/register", methods=["POST"])
 def register_donor():
     data = request.json or {}
 
-    # Required fields
     required = ["first_name", "last_name", "email", "password", "phone", "blood_type", "weight_kg"]
     missing = [f for f in required if not data.get(f)]
     if missing:
         return jsonify({"success": False, "message": f"Missing required fields: {', '.join(missing)}"}), 400
 
-    # Email
     email = data["email"].strip().lower()
     if not is_valid_email(email):
         return jsonify({"success": False, "message": "Invalid email format"}), 400
 
-    # Phone
     phone = clean_phone(data.get("phone"))
     if phone is None:
         return jsonify({
@@ -452,7 +429,6 @@ def register_donor():
                        "(e.g. 03123456 or +96103123456)"
         }), 400
 
-    # Blood type
     blood_type = clean_blood_type(data.get("blood_type"))
     if blood_type is None:
         return jsonify({
@@ -460,12 +436,10 @@ def register_donor():
             "message": f"Invalid blood type. Accepted values: {', '.join(sorted(VALID_BLOOD_TYPES))}"
         }), 400
 
-    # Weight
     weight = safe_float(data.get("weight_kg"))
     if weight is None:
         return jsonify({"success": False, "message": "Invalid weight value"}), 400
 
-    # Age (donors must be 18–65)
     age = safe_int(data.get("age"))
     if age is None or not (18 <= age <= 65):
         return jsonify({
@@ -473,7 +447,6 @@ def register_donor():
             "message": "Invalid age. Donors must be between 18 and 65 years old"
         }), 400
 
-    # Uniqueness (scoped to Donor role)
     if email_exists(email, "Donor"):
         return jsonify({"success": False, "message": "Email is already registered to an existing donor"}), 409
 
@@ -522,7 +495,6 @@ def update_donor_profile(donor_id):
 
     user_id = donor[0]["user_id"]
 
-    # Phone validation + uniqueness on update
     phone = clean_phone(data.get("phone"))
     if data.get("phone") and phone is None:
         return jsonify({"success": False, "message": "Invalid Lebanese phone number (must be 8 digits)"}), 400
@@ -571,8 +543,6 @@ def get_appointments():
     })
 
 
-
-
 @app.route("/api/appointments", methods=["POST"])
 def create_appointment():
     data = request.json or {}
@@ -595,19 +565,22 @@ def create_appointment():
         }), 404
 
     donor = donor[0]
+
     existing_appointment = query_db("""
-                                    SELECT appointment_id
-                                    FROM Appointment
-                                    WHERE donor_id = %s
-                                      AND status = 'Scheduled'
-                                      AND appointment_datetime >= NOW() LIMIT 1
-                                    """, (donor_id,))
+        SELECT appointment_id
+        FROM Appointment
+        WHERE donor_id = %s
+          AND status = 'Scheduled'
+          AND appointment_datetime >= NOW()
+        LIMIT 1
+    """, (donor_id,))
 
     if existing_appointment:
         return jsonify({
             "success": False,
             "message": "You already have a scheduled donation appointment."
         }), 409
+
     if donor["eligibility_status"] != "Eligible":
         return jsonify({
             "success": False,
@@ -633,15 +606,10 @@ def create_appointment():
         }), 403
 
     if donor["last_donation_date"]:
-        from datetime import date, datetime
-
         last_date = donor["last_donation_date"]
-
         if isinstance(last_date, str):
             last_date = datetime.strptime(last_date, "%Y-%m-%d").date()
-
         days_since = (date.today() - last_date).days
-
         if days_since < 56:
             return jsonify({
                 "success": False,
@@ -674,6 +642,7 @@ def create_appointment():
         "message": "Donation appointment scheduled successfully."
     }), 201
 
+
 # =====================================================
 # RECIPIENTS
 # =====================================================
@@ -686,24 +655,19 @@ def get_recipients():
     })
 
 
-# ── /register MUST come before /<int:recipient_id> so Flask matches it correctly ──
-
 @app.route("/api/recipients/register", methods=["POST"])
 def register_recipient():
     data = request.json or {}
 
-    # Required fields
     required = ["first_name", "last_name", "email", "password", "phone", "blood_type"]
     missing = [f for f in required if not data.get(f)]
     if missing:
         return jsonify({"success": False, "message": f"Missing required fields: {', '.join(missing)}"}), 400
 
-    # Email
     email = data["email"].strip().lower()
     if not is_valid_email(email):
         return jsonify({"success": False, "message": "Invalid email format"}), 400
 
-    # Phone
     phone = clean_phone(data.get("phone"))
     if phone is None:
         return jsonify({
@@ -712,7 +676,6 @@ def register_recipient():
                        "(e.g. 03123456 or +96103123456)"
         }), 400
 
-    # Blood type
     blood_type = clean_blood_type(data.get("blood_type"))
     if blood_type is None:
         return jsonify({
@@ -720,7 +683,6 @@ def register_recipient():
             "message": f"Invalid blood type. Accepted values: {', '.join(sorted(VALID_BLOOD_TYPES))}"
         }), 400
 
-    # Age (recipients must be 18-120)
     age = safe_int(data.get("age"))
     if age is None or not (18 <= age <= 120):
         return jsonify({
@@ -728,7 +690,6 @@ def register_recipient():
             "message": "Invalid age. Recipients must be between 18 and 120 years old"
         }), 400
 
-    # Uniqueness (scoped to Recipient role)
     if email_exists(email, "Recipient"):
         return jsonify({"success": False, "message": "Email is already registered to an existing recipient"}), 409
 
@@ -775,7 +736,6 @@ def update_recipient_profile(recipient_id):
 
     user_id = recipient[0]["user_id"]
 
-    # Phone validation + uniqueness on update
     phone = clean_phone(data.get("phone"))
     if data.get("phone") and phone is None:
         return jsonify({"success": False, "message": "Invalid Lebanese phone number (must be 8 digits)"}), 400
@@ -818,92 +778,6 @@ def blood_inventory():
         "success": True,
         "data": query_db("SELECT * FROM vw_blood_inventory ORDER BY expiry_date ASC")
     })
-
-
-@app.route("/api/blood-units", methods=["POST"])
-def add_blood_unit():
-    data = request.json or {}
-
-    blood_type = clean_blood_type(data.get("blood_type"))
-    if blood_type is None:
-        return jsonify({
-            "success": False,
-            "message": f"Invalid blood type. Accepted values: {', '.join(sorted(VALID_BLOOD_TYPES))}"
-        }), 400
-    quantity_ml = data.get("quantity_ml")
-    donation_date = data.get("donation_date")
-    expiry_date = data.get("expiry_date")
-
-    if not quantity_ml or int(quantity_ml) <= 0:
-        return jsonify({
-            "success": False,
-            "message": "Quantity must be greater than 0."
-        }), 400
-
-    from datetime import datetime
-
-    try:
-        donation_dt = datetime.strptime(donation_date, "%Y-%m-%d")
-        expiry_dt = datetime.strptime(expiry_date, "%Y-%m-%d")
-
-        if expiry_dt <= donation_dt:
-            return jsonify({
-                "success": False,
-                "message": "Expiry date must be after donation date."
-            }), 400
-
-    except ValueError:
-        return jsonify({
-            "success": False,
-            "message": "Invalid date format."
-        }), 400
-    blood_unit_id = query_db("""
-        INSERT INTO BloodUnit
-        (hospital_id, donor_id, blood_type, component_type, quantity_ml, donation_date, expiry_date, status)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, 'Available')
-    """, (
-        data.get("hospital_id"),
-        data.get("donor_id"),
-        blood_type,
-        data.get("component_type", "Whole Blood"),
-        data.get("quantity_ml"),
-        data.get("donation_date"),
-        data.get("expiry_date")
-    ), fetch=False)
-
-    if blood_unit_id is None:
-        return jsonify({"success": False, "message": "Failed to add blood unit"}), 400
-
-    return jsonify({"success": True, "blood_unit_id": blood_unit_id}), 201
-
-
-@app.route("/api/blood-units/<int:blood_unit_id>", methods=["PUT"])
-def edit_blood_unit(blood_unit_id):
-    data = request.json or {}
-
-    query_db("""
-        UPDATE BloodUnit
-        SET quantity_ml = %s,
-            expiry_date = %s,
-            status      = %s
-        WHERE blood_unit_id = %s
-    """, (
-        data.get("quantity_ml"),
-        data.get("expiry_date"),
-        data.get("status"),
-        blood_unit_id
-    ), fetch=False)
-
-    return jsonify({"success": True, "message": "Blood unit updated successfully"})
-
-
-@app.route("/api/blood-units/<int:blood_unit_id>", methods=["DELETE"])
-def delete_blood_unit(blood_unit_id):
-    query_db("""
-        DELETE FROM BloodUnit WHERE blood_unit_id = %s
-    """, (blood_unit_id,), fetch=False)
-
-    return jsonify({"success": True, "message": "Blood unit deleted"})
 
 
 # =====================================================
@@ -1011,8 +885,6 @@ def fulfill_request(request_id):
         cursor.execute("SELECT status FROM BloodRequest WHERE request_id = %s", (request_id,))
         row = cursor.fetchone()
 
-        print(f"[DEBUG] Request {request_id} - row: {row}")  # <-- add this
-
         if not row:
             return jsonify({"success": False, "error": "Request not found"}), 404
 
@@ -1027,26 +899,26 @@ def fulfill_request(request_id):
         for result in cursor.stored_results():
             result.fetchall()
         conn.commit()
+
         request_info = query_db("""
-                                SELECT r.user_id
-                                FROM BloodRequest br
-                                         JOIN Recipient r ON br.recipient_id = r.recipient_id
-                                WHERE br.request_id = %s
-                                """, (request_id,))
+            SELECT r.user_id
+            FROM BloodRequest br
+            JOIN Recipient r ON br.recipient_id = r.recipient_id
+            WHERE br.request_id = %s
+        """, (request_id,))
 
         if request_info:
             query_db("""
-                     INSERT INTO Notification
-                         (user_id, message, type, is_read)
-                     VALUES (%s, %s, 'Blood Request', FALSE)
-                     """, (
-                         request_info[0]["user_id"],
-                         "Your blood request has been approved and fulfilled."
-                     ), fetch=False)
+                INSERT INTO Notification (user_id, message, type, is_read)
+                VALUES (%s, %s, 'Blood Request', FALSE)
+            """, (
+                request_info[0]["user_id"],
+                "Your blood request has been approved and fulfilled."
+            ), fetch=False)
+
         return jsonify({"success": True, "message": "Blood request fulfilled"})
 
     except Error as e:
-        print(f"[DEBUG] Exception: {str(e)}")  # <-- and this
         return jsonify({"success": False, "error": str(e)}), 400
 
     finally:
@@ -1068,22 +940,23 @@ def reject_request(request_id):
             data.get("reason", "Request rejected by hospital staff")
         ])
         conn.commit()
+
         request_info = query_db("""
-                                SELECT r.user_id
-                                FROM BloodRequest br
-                                         JOIN Recipient r ON br.recipient_id = r.recipient_id
-                                WHERE br.request_id = %s
-                                """, (request_id,))
+            SELECT r.user_id
+            FROM BloodRequest br
+            JOIN Recipient r ON br.recipient_id = r.recipient_id
+            WHERE br.request_id = %s
+        """, (request_id,))
 
         if request_info:
             query_db("""
-                     INSERT INTO Notification
-                         (user_id, message, type, is_read)
-                     VALUES (%s, %s, 'Blood Request', FALSE)
-                     """, (
-                         request_info[0]["user_id"],
-                         "Your blood request has been rejected."
-                     ), fetch=False)
+                INSERT INTO Notification (user_id, message, type, is_read)
+                VALUES (%s, %s, 'Blood Request', FALSE)
+            """, (
+                request_info[0]["user_id"],
+                "Your blood request has been rejected."
+            ), fetch=False)
+
         return jsonify({"success": True, "message": "Blood request rejected"})
 
     except Error as e:
@@ -1096,7 +969,6 @@ def reject_request(request_id):
 
 @app.route("/api/appointments/<int:appointment_id>/cancel", methods=["PUT"])
 def cancel_appointment(appointment_id):
-
     appointment = query_db("""
         SELECT a.appointment_id, a.donor_id, d.user_id
         FROM Appointment a
@@ -1105,10 +977,7 @@ def cancel_appointment(appointment_id):
     """, (appointment_id,))
 
     if not appointment:
-        return jsonify({
-            "success": False,
-            "message": "Appointment not found"
-        }), 404
+        return jsonify({"success": False, "message": "Appointment not found"}), 404
 
     appointment = appointment[0]
 
@@ -1119,58 +988,43 @@ def cancel_appointment(appointment_id):
     """, (appointment_id,), fetch=False)
 
     query_db("""
-        INSERT INTO Notification
-        (user_id, message, type, is_read)
+        INSERT INTO Notification (user_id, message, type, is_read)
         VALUES (%s, %s, 'Appointment', FALSE)
     """, (
         appointment["user_id"],
         "Your donation appointment has been cancelled."
     ), fetch=False)
 
-    return jsonify({
-        "success": True,
-        "message": "Appointment cancelled"
-    })
+    return jsonify({"success": True, "message": "Appointment cancelled"})
+
 
 @app.route("/api/staff/urgent-shortage", methods=["POST"])
 def notify_urgent_shortage():
-
     data = request.json or {}
+
     staff = query_db("""
-                     SELECT staff_id
-                     FROM HospitalStaff
-                     WHERE staff_id = %s
-                     """, (data.get("staff_id"),))
+        SELECT staff_id FROM HospitalStaff WHERE staff_id = %s
+    """, (data.get("staff_id"),))
 
     if not staff:
-        return jsonify({
-            "success": False,
-            "message": "Unauthorized staff access."
-        }), 403
+        return jsonify({"success": False, "message": "Unauthorized staff access."}), 403
 
     blood_type = clean_blood_type(data.get("blood_type"))
-
     if blood_type is None:
-        return jsonify({
-            "success": False,
-            "message": "Invalid blood type"
-        }), 400
+        return jsonify({"success": False, "message": "Invalid blood type"}), 400
 
     donors = query_db("""
         SELECT d.donor_id, u.user_id
         FROM Donor d
-        JOIN UserAccount u
-            ON d.user_id = u.user_id
+        JOIN UserAccount u ON d.user_id = u.user_id
         WHERE d.blood_type = %s
           AND d.eligibility_status = 'Eligible'
           AND u.account_status = 'Active'
     """, (blood_type,))
 
     for donor in donors:
-
         query_db("""
-            INSERT INTO Notification
-            (user_id, message, type, is_read)
+            INSERT INTO Notification (user_id, message, type, is_read)
             VALUES (%s, %s, 'Urgent Shortage', FALSE)
         """, (
             donor["user_id"],
@@ -1181,6 +1035,8 @@ def notify_urgent_shortage():
         "success": True,
         "message": f"Urgent shortage notifications sent to {len(donors)} donors."
     })
+
+
 # =====================================================
 # NOTIFICATIONS
 # =====================================================
@@ -1207,10 +1063,7 @@ def mark_notification_read(notification_id):
     """, (notification_id,), fetch=False)
 
     if result == 0:
-        return jsonify({
-            "success": True,
-            "message": "Already marked as read"
-        })
+        return jsonify({"success": True, "message": "Already marked as read"})
 
     return jsonify({"success": True, "message": "Marked as read"})
 
@@ -1240,23 +1093,20 @@ def update_expired_blood():
 # =====================================================
 # STAFF
 # =====================================================
+
 @app.route("/api/donors")
 def get_donors():
-
     return jsonify({
         "success": True,
         "data": query_db("""
-            SELECT
-                d.donor_id,
-                u.first_name,
-                u.last_name,
-                d.blood_type
+            SELECT d.donor_id, u.first_name, u.last_name, d.blood_type
             FROM Donor d
-            JOIN UserAccount u
-                ON d.user_id = u.user_id
+            JOIN UserAccount u ON d.user_id = u.user_id
             ORDER BY u.first_name, u.last_name
         """)
     })
+
+
 @app.route("/api/staff/<int:user_id>/profile")
 def staff_profile(user_id):
     data = query_db("""
@@ -1303,35 +1153,22 @@ def staff_requests(user_id):
 
 
 @app.route("/api/staff/register-donation", methods=["POST"])
-
-@app.route("/api/staff/register-donation", methods=["POST"])
 def staff_register_donation():
-
     data = request.json or {}
 
     staff = query_db("""
-        SELECT staff_id
-        FROM HospitalStaff
-        WHERE staff_id = %s
+        SELECT staff_id FROM HospitalStaff WHERE staff_id = %s
     """, (data.get("staff_id"),))
 
     if not staff:
-        return jsonify({
-            "success": False,
-            "message": "Unauthorized staff access."
-        }), 403
+        return jsonify({"success": False, "message": "Unauthorized staff access."}), 403
 
     donor_info = query_db("""
-                          SELECT blood_type
-                          FROM Donor
-                          WHERE donor_id = %s
-                          """, (data.get("donor_id"),))
+        SELECT blood_type FROM Donor WHERE donor_id = %s
+    """, (data.get("donor_id"),))
 
     if not donor_info:
-        return jsonify({
-            "success": False,
-            "message": "Donor not found"
-        }), 404
+        return jsonify({"success": False, "message": "Donor not found"}), 404
 
     blood_type = donor_info[0]["blood_type"]
 
@@ -1446,14 +1283,12 @@ def create_staff_account():
         data.get("hospital_id"),
         data.get("staff_role")
     ), fetch=False)
-    # inside create_staff_account(), before return:
+
     record_log(
-        data.get("admin_user_id"),
-        "CREATE",
-        "HospitalStaff",
-        staff_id,
+        data.get("admin_user_id"), "CREATE", "HospitalStaff", staff_id,
         f"Staff account created: {email}"
     )
+
     return jsonify({"success": True, "user_id": user_id, "staff_id": staff_id}), 201
 
 
@@ -1466,50 +1301,44 @@ def update_staff_status(user_id):
         SET account_status = %s
         WHERE user_id = %s AND role = 'HospitalStaff'
     """, (data.get("account_status"), user_id), fetch=False)
-    # inside update_staff_status(), after UPDATE:
+
     record_log(
-        data.get("admin_user_id"),
-        "UPDATE",
-        "HospitalStaff",
-        user_id,
+        data.get("admin_user_id"), "UPDATE", "HospitalStaff", user_id,
         f"Staff status updated to {data.get('account_status')}"
     )
+
     return jsonify({"success": True, "message": "Staff status updated"})
 
 
 @app.route("/api/admin/staff/<int:staff_id>", methods=["DELETE"])
 def delete_staff_account(staff_id):
+    data = request.json or {}
+
     query_db("""
         DELETE u FROM UserAccount u
         JOIN HospitalStaff hs ON u.user_id = hs.user_id
         WHERE hs.staff_id = %s
     """, (staff_id,), fetch=False)
-    # inside delete_staff_account(), before return:
-    data = request.json or {}
 
     record_log(
-        data.get("admin_user_id"),
-        "DELETE",
-        "HospitalStaff",
-        staff_id,
-        "Staff account deleted"
+        data.get("admin_user_id"), "DELETE", "HospitalStaff", staff_id, "Staff account deleted"
     )
+
     return jsonify({"success": True, "message": "Staff deleted"})
-# =======================================
+
+
+# =====================================================
 # MOH
-#===============================================
+# =====================================================
+
 @app.route("/api/ministry/inventory-summary")
 def ministry_inventory_summary():
-
     return jsonify({
         "success": True,
         "data": query_db("""
-            SELECT
-                blood_type,
-                component_type,
-                status,
-                COUNT(*) AS unit_count,
-                SUM(quantity_ml) AS total_quantity_ml
+            SELECT blood_type, component_type, status,
+                   COUNT(*) AS unit_count,
+                   SUM(quantity_ml) AS total_quantity_ml
             FROM BloodUnit
             GROUP BY blood_type, component_type, status
             ORDER BY blood_type, component_type, status
@@ -1519,28 +1348,20 @@ def ministry_inventory_summary():
 
 @app.route("/api/ministry/hospital-summary")
 def ministry_hospital_summary():
-
     return jsonify({
         "success": True,
         "data": query_db("""
-            SELECT
-                h.hospital_name,
-                h.location,
-                b.blood_type,
-                COUNT(*) AS unit_count,
-                SUM(b.quantity_ml) AS total_quantity_ml
+            SELECT h.hospital_name, h.location, b.blood_type,
+                   COUNT(*) AS unit_count,
+                   SUM(b.quantity_ml) AS total_quantity_ml
             FROM BloodUnit b
-            JOIN Hospital h
-                ON b.hospital_id = h.hospital_id
-            GROUP BY
-                h.hospital_name,
-                h.location,
-                b.blood_type
-            ORDER BY
-                h.hospital_name,
-                b.blood_type
+            JOIN Hospital h ON b.hospital_id = h.hospital_id
+            GROUP BY h.hospital_name, h.location, b.blood_type
+            ORDER BY h.hospital_name, b.blood_type
         """)
     })
+
+
 # =====================================================
 # RUN
 # =====================================================

@@ -33,28 +33,25 @@
     <section class="card">
         <h2>Inventory filter</h2>
         <div class="toolbar">
-           <select id="filterType">
-    <option value="">All blood types</option>
-    <option value="A+">A+</option>
-    <option value="A-">A-</option>
-    <option value="B+">B+</option>
-    <option value="B-">B-</option>
-    <option value="AB+">AB+</option>
-    <option value="AB-">AB-</option>
-    <option value="O+">O+</option>
-    <option value="O-">O-</option>
-</select>
-
-<select id="filterStatus">
-    <option value="">All statuses</option>
-    <option value="Available">Available</option>
-    <option value="Used">Used</option>
-    <option value="Expired">Expired</option>
-</select>
-
-<input type="date" id="filterExpiry">
-
-<button type="button" class="btn btn-secondary" onclick="loadInventory()">Apply filter</button>
+            <select id="filterType">
+                <option value="">All blood types</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+            </select>
+            <select id="filterStatus">
+                <option value="">All statuses</option>
+                <option value="Available">Available</option>
+                <option value="Used">Used</option>
+                <option value="Expired">Expired</option>
+            </select>
+            <input type="date" id="filterExpiry">
+            <button type="button" class="btn btn-secondary" onclick="loadInventory()">Apply filter</button>
         </div>
         <p class="inline-note">Leave blank to list all units for your hospital.</p>
     </section>
@@ -65,71 +62,34 @@
     </section>
 
     <section class="card">
-        <h2>Add blood unit</h2>
-        <form id="bloodForm" class="form-row" autocomplete="off">
-            <input type="number" id="donor_id" placeholder="Donor ID (optional)">
-            <select id="blood_type" required>
-    <option value="">Select blood type</option>
-    <option value="A+">A+</option>
-    <option value="A-">A-</option>
-    <option value="B+">B+</option>
-    <option value="B-">B-</option>
-    <option value="AB+">AB+</option>
-    <option value="AB-">AB-</option>
-    <option value="O+">O+</option>
-    <option value="O-">O-</option>
-</select>
-           <input type="number" id="quantity_ml" placeholder="Quantity (ml)" required min="1">
-            <input type="date" id="donation_date" required>
-            <input type="date" id="expiry_date" required>
-            <button type="submit" class="btn btn-primary">Add unit</button>
-        </form>
-    </section>
-
-    <section class="card">
         <h2>Register donation</h2>
         <form id="donationForm" class="form-row">
             <select id="donor_id_donation" required>
-    <option value="">Select donor</option>
-</select>
-
-    <option value="">Select blood type</option>
-    <option value="A+">A+</option>
-    <option value="A-">A-</option>
-    <option value="B+">B+</option>
-    <option value="B-">B-</option>
-    <option value="AB+">AB+</option>
-    <option value="AB-">AB-</option>
-    <option value="O+">O+</option>
-    <option value="O-">O-</option>
-
-</select>
-
+                <option value="">Select donor</option>
+            </select>
             <input type="number" id="quantity_donation" placeholder="Quantity (ml)" required min="1">
             <button type="submit" class="btn btn-primary">Register</button>
         </form>
     </section>
-<section class="card">
-    <h2>Urgent blood shortage</h2>
 
-    <form id="urgentForm" class="form-row">
-        <select id="urgentBloodType" required>
-            <option value="">Select blood type</option>
-            <option value="A+">A+</option>
-            <option value="A-">A-</option>
-            <option value="B+">B+</option>
-            <option value="B-">B-</option>
-            <option value="AB+">AB+</option>
-            <option value="AB-">AB-</option>
-            <option value="O+">O+</option>
-            <option value="O-">O-</option>
-        </select>
+    <section class="card">
+        <h2>Urgent blood shortage</h2>
+        <form id="urgentForm" class="form-row">
+            <select id="urgentBloodType" required>
+                <option value="">Select blood type</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+            </select>
+            <button type="submit" class="btn btn-danger">Send urgent alert</button>
+        </form>
+    </section>
 
-        <button type="submit" class="btn btn-danger">
-            Send urgent alert
-        </button>
-    </form>
-</section>
     <section class="card span-2">
         <h2>Blood requests</h2>
         <div id="requestsTable">Loading…</div>
@@ -139,7 +99,6 @@
 </main>
 
 <script>
-<!--const API_URL = "http://127.0.0.1:5000/api";-->
 const API_URL = "https://blood-bank-management-system-production-0359.up.railway.app/api";
 
 let staffProfile = null;
@@ -163,22 +122,23 @@ async function loadStaffProfile() {
 }
 
 async function loadInventory() {
-    const filterType = document.getElementById("filterType").value;
-const filterStatus = document.getElementById("filterStatus").value;
-const filterExpiry = document.getElementById("filterExpiry").value;
+    const filterType   = document.getElementById("filterType").value;
+    const filterStatus = document.getElementById("filterStatus").value;
+    const filterExpiry = document.getElementById("filterExpiry").value;
+
     const res = await fetch(`${API_URL}/staff/${user.user_id}/inventory`);
     const result = await res.json();
 
     let html = `<div class="table-scroll"><table class="data-table">
         <thead><tr>
-            <th>ID</th><th>Type</th><th>Qty</th><th>Status</th>
-            <th>Expiry</th><th>Actions</th>
+            <th>ID</th><th>Type</th><th>Qty (ml)</th><th>Status</th><th>Expiry</th>
         </tr></thead><tbody>`;
 
     result.data.forEach(b => {
-        if (filterType && b.blood_type !== filterType) return;
-if (filterStatus && b.status !== filterStatus) return;
-if (filterExpiry && String(b.expiry_date).slice(0, 10) !== filterExpiry) return;
+        if (filterType   && b.blood_type !== filterType)                        return;
+        if (filterStatus && b.status     !== filterStatus)                      return;
+        if (filterExpiry && String(b.expiry_date).slice(0, 10) !== filterExpiry) return;
+
         html += `
         <tr>
             <td>${b.blood_unit_id}</td>
@@ -186,47 +146,11 @@ if (filterExpiry && String(b.expiry_date).slice(0, 10) !== filterExpiry) return;
             <td>${b.quantity_ml}</td>
             <td><span class="status-pill">${b.status}</span></td>
             <td>${b.expiry_date}</td>
-            <td>
-                <button type="button" class="btn btn-sm btn-secondary" onclick="editUnit(${b.blood_unit_id})">Edit</button>
-                <button type="button" class="btn btn-sm btn-danger" onclick="deleteUnit(${b.blood_unit_id})">Delete</button>
-            </td>
         </tr>`;
     });
 
     html += "</tbody></table></div>";
     document.getElementById("inventoryTable").innerHTML = html;
-}
-
-async function editUnit(id) {
-
-    const qty = prompt("New quantity:");
-
-    if (!qty || Number(qty) <= 0) {
-        alert("Quantity must be greater than 0.");
-        return;
-    }
-
-    const status = prompt("Status (Available/Used/Expired):");
-
-    const expiry = prompt("New expiry date (YYYY-MM-DD):");
-
-    await fetch(`${API_URL}/blood-units/${id}`, {
-        method: "PUT",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            quantity_ml: qty,
-            expiry_date: expiry,
-            status: status
-        })
-    });
-
-    loadInventory();
-}
-
-async function deleteUnit(id) {
-    if (!confirm("Delete this unit?")) return;
-    await fetch(`${API_URL}/blood-units/${id}`, { method: "DELETE" });
-    loadInventory();
 }
 
 async function loadRequests() {
@@ -241,7 +165,7 @@ async function loadRequests() {
     let html = `<div class="table-scroll"><table class="data-table">
         <thead><tr>
             <th>ID</th><th>Recipient</th><th>Type</th>
-            <th>Qty</th><th>Status</th><th>Action</th>
+            <th>Qty (ml)</th><th>Status</th><th>Action</th>
         </tr></thead><tbody>`;
 
     result.data.forEach(r => {
@@ -256,7 +180,7 @@ async function loadRequests() {
             <td>
                 ${isPending ? `
                     <button type="button" class="btn btn-sm btn-secondary" onclick="approve(${r.request_id})">Approve</button>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="rejectReq(${r.request_id})">Reject</button>
+                    <button type="button" class="btn btn-sm btn-danger"    onclick="rejectReq(${r.request_id})">Reject</button>
                 ` : `<span class="muted">${r.status}</span>`}
             </td>
         </tr>`;
@@ -280,7 +204,6 @@ async function approve(id) {
     });
 
     const result = await res.json();
-
     if (!result.success) {
         alert("Error: " + result.error);
         return;
@@ -293,7 +216,6 @@ async function approve(id) {
 
 async function rejectReq(id) {
     const reason = prompt("Reason:");
-
     await fetch(`${API_URL}/blood-requests/${id}/reject`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
@@ -302,123 +224,66 @@ async function rejectReq(id) {
             reason: reason
         })
     });
-
-   await loadRequests();
-await loadInventory();
+    await loadRequests();
+    await loadInventory();
 }
-async function loadDonors() {
 
+async function loadDonors() {
     const res = await fetch(`${API_URL}/donors`);
     const result = await res.json();
 
-    const dropdown =
-        document.getElementById("donor_id_donation");
-
-    dropdown.innerHTML =
-        `<option value="">Select donor</option>`;
+    const dropdown = document.getElementById("donor_id_donation");
+    dropdown.innerHTML = `<option value="">Select donor</option>`;
 
     result.data.forEach(d => {
-
         dropdown.innerHTML += `
             <option value="${d.donor_id}">
-                ${d.first_name} ${d.last_name}
-                (${d.blood_type})
-            </option>
-        `;
+                ${d.first_name} ${d.last_name} (${d.blood_type})
+            </option>`;
     });
 }
+
 async function init() {
     await loadStaffProfile();
     await loadInventory();
     await loadRequests();
     await loadDonors();
-document.getElementById("urgentForm")
-.addEventListener("submit", async e => {
 
-    e.preventDefault();
-
-    const response = await fetch(
-        `${API_URL}/staff/urgent-shortage`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-           body: JSON.stringify({
-    staff_id: staffProfile.staff_id,
-    blood_type:
-        document.getElementById(
-            "urgentBloodType"
-        ).value
-})
-        }
-    );
-
-    const result = await response.json();
-
-    alert(result.message || "Urgent alerts sent");
-
-    e.target.reset();
-});
-
-    document.getElementById("bloodForm").addEventListener("submit", async e => {
+    document.getElementById("urgentForm").addEventListener("submit", async e => {
         e.preventDefault();
-
-        const response = await fetch(`${API_URL}/blood-units`, {
+        const response = await fetch(`${API_URL}/staff/urgent-shortage`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
-                hospital_id: staffProfile.hospital_id,
-                donor_id: document.getElementById("donor_id").value || null,
-                blood_type: document.getElementById("blood_type").value,
-                quantity_ml: document.getElementById("quantity_ml").value,
-                donation_date: document.getElementById("donation_date").value,
-                expiry_date: document.getElementById("expiry_date").value
+                staff_id: staffProfile.staff_id,
+                blood_type: document.getElementById("urgentBloodType").value
             })
         });
-
         const result = await response.json();
-        if (!result.success) {
-            alert("Error: " + (result.error || result.message || "Could not add blood unit"));
-            return;
-        }
-
-        alert("Blood unit added successfully");
-        document.getElementById("bloodForm").reset();
-        await loadInventory();
+        alert(result.message || "Urgent alerts sent");
+        e.target.reset();
     });
 
     document.getElementById("donationForm").addEventListener("submit", async e => {
         e.preventDefault();
-
-       const response = await fetch(`${API_URL}/staff/register-donation`, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-        donor_id: document.getElementById("donor_id_donation").value,
-        staff_id: staffProfile.staff_id,
-        hospital_id: staffProfile.hospital_id,
-        blood_type: document.getElementById("blood_type_donation").value,
-        quantity_ml: document.getElementById("quantity_donation").value
-    })
-});
-
-const result = await response.json();
-
-if (!result.success) {
-    alert("Error: " + (result.error || result.message));
-    return;
-}
-
-alert("Donation registered!");
-
-e.target.reset();
-
-await loadInventory();
-
+        const response = await fetch(`${API_URL}/staff/register-donation`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                donor_id:   document.getElementById("donor_id_donation").value,
+                staff_id:   staffProfile.staff_id,
+                hospital_id: staffProfile.hospital_id,
+                quantity_ml: document.getElementById("quantity_donation").value
+            })
+        });
+        const result = await response.json();
+        if (!result.success) {
+            alert("Error: " + (result.error || result.message));
+            return;
+        }
         alert("Donation registered!");
         e.target.reset();
-        loadInventory();
+        await loadInventory();
     });
 }
 
