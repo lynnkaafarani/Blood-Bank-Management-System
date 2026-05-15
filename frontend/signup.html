@@ -44,7 +44,16 @@
                 </select>
 
                 <input type="email" id="signupEmail" placeholder="Email" autocomplete="email" required>
-                <input type="password" id="signupPassword" placeholder="Password" autocomplete="new-password" required>
+                <div class="password-wrapper">
+    <input type="password" id="signupPassword"
+           placeholder="Password"
+           autocomplete="new-password"
+           required minlength="8">
+
+    <button type="button" id="toggleSignupPassword" class="toggle-password">
+        👁
+    </button>
+</div>
                 <input type="text" id="signupPhone" placeholder="Phone" required>
 
                 <select id="signupRole" required>
@@ -64,7 +73,7 @@
     <option value="O-">O-</option>
 </select>
                 <div id="donorFields" style="display:none;">
-    <input type="number" id="signupWeight" placeholder="Weight (kg)" min="1">
+    <input type="number" id="signupWeight" placeholder="Weight (kg)" min="45">
 </div>
 
 <div id="recipientFields" style="display:none;">

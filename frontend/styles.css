@@ -775,3 +775,31 @@ table.summary-table tr:last-child td {
         display: none;
     }
 }
+/* existing styles above */
+
+
+/* =========================================
+   PASSWORD VISIBILITY
+========================================= */
+
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 48px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #999;
+}
