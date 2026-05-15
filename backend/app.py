@@ -1035,13 +1035,14 @@ def notify_urgent_shortage():
     """, (blood_type,))
 
     for donor in donors:
+        print(f"Sending to user_id: {donor['user_id']}", flush=True)
         query_db("""
-            INSERT INTO Notification (user_id, message, type, is_read)
-            VALUES (%s, %s, 'Urgent Shortage', FALSE)
-        """, (
-            donor["user_id"],
-            f"Urgent blood shortage alert for blood type {blood_type}. Please consider donating."
-        ), fetch=False)
+                 INSERT INTO Notification (user_id, message, type, is_read)
+                 VALUES (%s, %s, 'Urgent Shortage', FALSE)
+                 """, (
+                     donor["user_id"],
+                     f"Urgent blood shortage alert for blood type {blood_type}. Please consider donating."
+                 ), fetch=False)
 
     return jsonify({
         "success": True,
