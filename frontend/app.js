@@ -144,7 +144,10 @@ if (signupForm) {
             payload.medical_condition =
                 document.getElementById("signupCondition").value;
 
-        } else {
+        }else if (result.user.role === "MinistryOfHealth") {
+    window.location.href = "ministry/ministry.html";
+}
+        else {
 
             alert("Select Donor or Recipient");
             return;
