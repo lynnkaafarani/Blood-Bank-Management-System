@@ -1357,7 +1357,52 @@ def delete_staff_account(staff_id):
         "Staff account deleted"
     )
     return jsonify({"success": True, "message": "Staff deleted"})
+# =======================================
+# MOH
+#===============================================
+@app.route("/api/ministry/inventory-summary")
+def ministry_inventory_summary():
 
+    return jsonify({
+        "success": True,
+        "data": query_db("""
+            SELECT
+                blood_type,
+                component_type,
+                status,
+                COUNT(*) AS unit_count,
+                SUM(quantity_ml) AS total_quantity_ml
+            FROM BloodUnit
+            GROUP BY blood_type, component_type, status
+            ORDER BY blood_type, component_type, status
+        """)
+    })
+
+
+@app.route("/api/ministry/hospital-summary")
+def ministry_hospital_summary():
+
+    return jsonify({
+        "success": True,
+        "data": query_db("""
+            SELECT
+                h.hospital_name,
+                h.location,
+                b.blood_type,
+                COUNT(*) AS unit_count,
+                SUM(b.quantity_ml) AS total_quantity_ml
+            FROM BloodUnit b
+            JOIN Hospital h
+                ON b.hospital_id = h.hospital_id
+            GROUP BY
+                h.hospital_name,
+                h.location,
+                b.blood_type
+            ORDER BY
+                h.hospital_name,
+                b.blood_type
+        """)
+    })
 # =====================================================
 # RUN
 # =====================================================

@@ -3,31 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Ministry Dashboard</title>
+    <meta name="theme-color" content="#0a0e12">
+    <title>Ministry of Health — BBMS</title>
     <link rel="stylesheet" href="../styles.css">
 </head>
-<body class="page-app">
+<body class="page-app role-admin">
 
 <header class="topbar">
     <div class="app-header-inner">
-        <h1>Ministry of Health Dashboard</h1>
+        <div class="app-title-block">
+            <span class="header-logo" aria-hidden="true"></span>
+            <h1>Ministry of Health Dashboard</h1>
+            <span class="role-badge">Read Only</span>
+        </div>
 
-        <button class="btn btn-ghost" onclick="logout()">
-            Log out
-        </button>
+        <div class="app-header-actions">
+            <button type="button" class="btn btn-ghost" onclick="logout()">Log out</button>
+        </div>
     </div>
 </header>
 
 <main class="app-main">
+    <div class="layout-grid cols-2">
 
-    <section class="card">
-        <h2>National Blood Inventory Summary</h2>
+        <section class="card span-2">
+            <h2>Signed in</h2>
+            <p id="userInfo"></p>
+            <p class="inline-note">
+                This dashboard provides aggregated blood inventory information for monitoring and planning only.
+            </p>
+        </section>
 
-        <div id="inventoryTable">
-            Loading...
-        </div>
-    </section>
+        <section class="card span-2">
+            <h2>National Blood Inventory Summary</h2>
+            <div id="inventorySummaryTable">Loading inventory summary…</div>
+        </section>
 
+        <section class="card span-2">
+            <h2>Hospital Blood Inventory Summary</h2>
+            <div id="hospitalSummaryTable">Loading hospital summary…</div>
+        </section>
+
+    </div>
 </main>
 
 <script src="ministry.js"></script>
