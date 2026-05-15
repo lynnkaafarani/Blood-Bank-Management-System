@@ -1008,7 +1008,7 @@ def fulfill_request(request_id):
         conn = get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("SELECT status FROM bloodrequest WHERE request_id = %s", (request_id,))
+        cursor.execute("SELECT status FROM BloodRequest WHERE request_id = %s", (request_id,))
         row = cursor.fetchone()
 
         print(f"[DEBUG] Request {request_id} - row: {row}")  # <-- add this
