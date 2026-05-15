@@ -318,23 +318,34 @@ def record_log(user_id, action_type, entity_type, entity_id, description):
         VALUES (%s, %s, %s, %s, %s)
     """, (user_id, action_type, entity_type, entity_id, description), fetch=False)
 
-
 @app.route("/api/admin/staff/<int:staff_id>", methods=["PUT"])
 def update_staff(staff_id):
     data = request.json or {}
 
     query_db("""
-        UPDATE HospitalStaff
-        SET staff_role = %s
-        WHERE staff_id = %s
-    """, (data.get("staff_role"), staff_id), fetch=False)
-
-    query_db("""
         UPDATE UserAccount ua
         JOIN HospitalStaff hs ON ua.user_id = hs.user_id
-        SET ua.phone = %s
+        SET ua.first_name = %s,
+            ua.last_name = %s,
+            ua.phone = %s
         WHERE hs.staff_id = %s
-    """, (data.get("phone"), staff_id), fetch=False)
+    """, (
+        data.get("first_name"),
+        data.get("last_name"),
+        data.get("phone"),
+        staff_id
+    ), fetch=False)
+
+    query_db("""
+        UPDATE HospitalStaff
+        SET hospital_id = %s,
+            staff_role = %s
+        WHERE staff_id = %s
+    """, (
+        data.get("hospital_id"),
+        data.get("staff_role"),
+        staff_id
+    ), fetch=False)
 
     record_log(
         data.get("admin_user_id"),
@@ -344,8 +355,10 @@ def update_staff(staff_id):
         "Staff account updated"
     )
 
-    return jsonify({"success": True, "message": "Staff updated successfully"})
-
+    return jsonify({
+        "success": True,
+        "message": "Staff updated successfully"
+    })
 
 @app.route("/api/admin/unlock-user/<int:user_id>", methods=["PUT"])
 def unlock_user(user_id):
