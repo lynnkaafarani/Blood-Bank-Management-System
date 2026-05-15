@@ -84,6 +84,7 @@ if (signupForm) {
             });
 
             const result = await response.json();
+            console.log("LOGIN RESULT:", result);
 
             if (!result.success) {
                 alert(result.message || "Signup failed");
