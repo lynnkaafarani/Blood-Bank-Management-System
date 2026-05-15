@@ -249,7 +249,21 @@ def login():
 # =====================================================
 # ADMIN REQUIREMENTS
 # =====================================================
+@app.route("/api/admin/unlock-user/<int:user_id>", methods=["PUT"])
+def unlock_user(user_id):
 
+    query_db("""
+        UPDATE UserAccount
+        SET failed_login_attempts = 0,
+            account_status = 'Active',
+            locked_until = NULL
+        WHERE user_id = %s
+    """, (user_id,), fetch=False)
+
+    return jsonify({
+        "success": True,
+        "message": "User account unlocked successfully"
+    })
 @app.route("/api/users")
 def get_users():
     return jsonify({

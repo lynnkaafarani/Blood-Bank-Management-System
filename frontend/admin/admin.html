@@ -81,7 +81,6 @@
 </main>
 
 <script>
-<!--const API_URL = "http://127.0.0.1:5000/api";-->
 const API_URL = "https://blood-bank-management-system-production-0359.up.railway.app/api";
 const user = JSON.parse(localStorage.getItem("bbms_user"));
 
@@ -110,6 +109,7 @@ async function loadUsers() {
                 <th>Email</th>
                 <th>Role</th>
                 <th>Status</th>
+                <th>Actions</th>
             </tr></thead><tbody>
     `;
 
@@ -121,6 +121,11 @@ async function loadUsers() {
                 <td>${u.email}</td>
                 <td>${u.role}</td>
                 <td><span class="status-pill">${u.account_status}</span></td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="unlockUser(${u.user_id})">
+                        Unlock
+                    </button>
+                </td>
             </tr>
         `;
     });
@@ -305,6 +310,19 @@ async function deleteStaff(staffId) {
 
     loadStaff();
     loadUsers();
+}
+
+async function unlockUser(userId) {
+    const res = await fetch(`${API_URL}/admin/unlock-user/${userId}`, {
+        method: "PUT"
+    });
+
+    const result = await res.json();
+
+    alert(result.message);
+
+    loadUsers();
+    loadStaff();
 }
 
 loadUsers();
