@@ -201,7 +201,7 @@ def login():
         return jsonify({"success": False, "message": "Account is not active"}), 403
 
     if user["password_hash"] != password:
-        failed_attempts = user["failed_login_attempts"] + 1
+        failed_attempts = (user["failed_login_attempts"] or 0) + 1
 
         if failed_attempts >= 5:
             query_db("""
