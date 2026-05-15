@@ -1,0 +1,65 @@
+[33m9cc1235[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Add Ministry of Health dashboard
+[33m931beda[m Merge remote-tracking branch 'origin/main'
+[33mc1ecc91[m Remove add/edit/delete blood unit, fix donation form bugs
+[33m9671f82[m Fixed backend and frontend filters
+[33meca6bb9[m Merge remote changes
+[33m66a4760[m Fix BloodRequest table case in fulfill_request
+[33mf34886f[m Updated backend endpoints and frontend JS
+[33m603a11f[m Fix CORS for deployed frontend
+[33m7a5e483[m Improve donation registration workflow
+[33m7fb1bd7[m Your changes
+[33m030c368[m Your changes
+[33m7b23726[m Update project
+[33m2405d13[m Update project
+[33m14f3193[m Add Ministry of Health read-only dashboard
+[33mfda066f[m Add Ministry of Health dashboard
+[33mc49d9e6[m Add Ministry of Health dashboard
+[33m086e084[m Add Ministry of Health dashboard
+[33m1bd1d0b[m Fix duplicate cancel appointment route
+[33mf8dad63[m Fix duplicate cancel appointment route
+[33mf3335fb[m Notify donor when appointment is cancelled
+[33mce80569[m Add donor appointment cancellation
+[33m5f40758[m Improve donor appointment scheduling
+[33m4d7c17b[m Restore admin page
+[33m9b285f6[m Restore admin API routes
+[33m29bab1e[m Add admin activity logging and staff update
+[33m7e2fe54[m Add password visibility and signup validation UI
+[33m733ae15[m Updated backend eligibility, frontend fixes, and DB script
+[33mc0becee[m Implement secure password hashing
+[33m859e021[m Implement secure password hashing
+[33m6c1fae1[m Use hashed password verification in login
+[33m03334dd[m Hash user passwords
+[33m7e6aaf4[m Add dynamic signup validation
+[33m6637c14[m Add dynamic signup validation
+[33ma54bae3[m Improve signup role-specific fields
+[33m7cbddfb[m Improve signup role-specific fields
+[33m83aa2e4[m Add admin unlock account feature
+[33m419079f[m Ensure frontend displays backend login message
+[33m8b95e09[m Implement account lock after failed login attempts
+[33m5e7dcb9[m Implement account lock after 5 failed logins
+[33mc2f4f06[m Fix donor API URL syntax
+[33m25a68b9[m Fix donor API URL syntax
+[33m8a3b334[m Add backend database config debug
+[33m1d50ae5[m Add full database seed file
+[33m0394ba7[m Add database debug route
+[33m23412dc[m Fix Railway database environment variables
+[33m76534c6[m Fix frontend API URL
+[33mbfa4651[m Connect frontend to online backend
+[33m94b960b[m frontend
+[33m92cf2c6[m Create template to add an FAQ page
+[33m852011c[m Fix staff dashboard: prevent duplicate approvals, show backend errors
+[33m5da0b39[m Add validation for email, phone, blood type, and age in donor/recipient registration
+[33maecd85c[m Merge remote-tracking branch 'origin/main'
+[33mf30ed0c[m Add min date validation for appointment and blood search inputs
+[33mb8e1046[m Fix login response structure and align frontend-backend API
+[33mcc9be6c[m restore config.py
+[33m9ed5ac7[m Fix app.py run block duplication
+[33m68787f5[m update app
+[33m1ac8f3d[m Fix incorrect app.py
+[33m3cacd78[m Fix phone validation, blood type validation, and registration bugs
+[33m3341281[m Add min date validation for appointment and blood search inputs
+[33m2dc2fd9[m[33m ([m[1;32mbackup-good-version[m[33m)[m Fix app.run indentation
+[33m6f3ca2a[m Fix missing os import
+[33mabeb460[m Fix port for deployment
+[33m0e3a365[m Prepare backend for deployment
+[33m948c458[m BBMS complete system (Admin, Staff, Donor, Recipient + Signup)

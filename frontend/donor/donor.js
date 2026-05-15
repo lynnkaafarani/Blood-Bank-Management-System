@@ -14,16 +14,17 @@ function logout() {
 }
 
 async function loadDonorProfile() {
-    const res = await fetch(`${API_URL}/donors`);
+    const res = await fetch(`${API_URL}/donors/by-user/${user.user_id}`);
     const result = await res.json();
 
-    donorProfile = result.data.find(d => d.user_id === user.user_id);
-
-
-    if (!donorProfile) {
+    if (!result.success) {
         document.getElementById("profileBox").innerHTML = "Donor profile not found.";
         return;
     }
+
+    donorProfile = result.data;
+    // rest stays the same...
+}
 
     document.getElementById("userInfo").textContent =
         `${user.full_name} (${user.email})`;
@@ -47,7 +48,7 @@ document.getElementById("updateHealthStatus").value = donorProfile.health_status
 document.getElementById("updateWeight").value = donorProfile.weight_kg || "";
 document.getElementById("updateMedication").value = donorProfile.medication_restricted ? "true" : "false";
 
-}
+
 
 async function loadHospitals() {
     const search = document.getElementById("hospitalSearch").value.toLowerCase();
