@@ -1126,26 +1126,6 @@ def delete_staff_account(staff_id):
 
     return jsonify({"success": True, "message": "Staff deleted"})
 
-@app.route("/api/admin/hash-existing-passwords")
-def hash_existing_passwords():
-    users = query_db("SELECT user_id, password_hash FROM UserAccount")
-
-    for user in users:
-        current_password = user["password_hash"]
-
-        if not current_password.startswith("scrypt:") and not current_password.startswith("pbkdf2:"):
-            hashed = generate_password_hash(current_password)
-
-            query_db("""
-                UPDATE UserAccount
-                SET password_hash = %s
-                WHERE user_id = %s
-            """, (hashed, user["user_id"]), fetch=False)
-
-    return jsonify({
-        "success": True,
-        "message": "Existing passwords hashed successfully"
-    })
 # =====================================================
 # RUN
 # =====================================================
