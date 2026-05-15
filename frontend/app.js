@@ -36,6 +36,9 @@ if (loginForm) {
             } else if (result.user.role === "Recipient") {
                 window.location.href = "recipient/recipient.html";
             }
+            else if (result.user.role === "MinistryOfHealth") {
+    window.location.href = "moh/ministry.html";
+}
 
         } catch (err) {
             message.textContent = "Server error. Make sure backend is running.";
@@ -144,10 +147,7 @@ if (signupForm) {
             payload.medical_condition =
                 document.getElementById("signupCondition").value;
 
-        }else if (result.user.role === "MinistryOfHealth") {
-    window.location.href = "moh/ministry.html";
-}
-        else {
+        }  else {
 
             alert("Select Donor or Recipient");
             return;
