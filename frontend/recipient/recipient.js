@@ -76,6 +76,27 @@ async function loadBloodInventory() {
     const res = await fetch(`${API_URL}/blood-inventory`);
     const result = await res.json();
 
+    // Filter the data based on criteria
+    const filteredData = result.data.filter(b => {
+        if (bloodType && !b.blood_type.toLowerCase().includes(bloodType)) return false;
+        if (location && !b.location.toLowerCase().includes(location)) return false;
+        if (status && b.status !== status) return false;
+        if (date && b.expiry_date < date) return false;
+        return true;
+    });
+
+    // Check if no results found
+    if (filteredData.length === 0) {
+        document.getElementById("inventoryTable").innerHTML = `
+            <div class="no-results-message">
+                <p>⚠️ No blood units available matching your search criteria.</p>
+                <p class="inline-note">Try adjusting your filters or check back later.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Build the table with results
     let html = `
         <div class="table-scroll">
         <table class="data-table">
@@ -91,12 +112,7 @@ async function loadBloodInventory() {
             </tr></thead><tbody>
     `;
 
-    result.data.forEach(b => {
-        if (bloodType && !b.blood_type.toLowerCase().includes(bloodType)) return;
-        if (location && !b.location.toLowerCase().includes(location)) return;
-        if (status && b.status !== status) return;
-        if (date && b.expiry_date < date) return;
-
+    filteredData.forEach(b => {
         html += `
             <tr>
                 <td>${b.blood_unit_id}</td>
@@ -113,86 +129,6 @@ async function loadBloodInventory() {
 
     html += `</tbody></table></div>`;
     document.getElementById("inventoryTable").innerHTML = html;
-}
-
-document.getElementById("requestForm").addEventListener("submit", async function(e) {
-    e.preventDefault();
-
-    if (!recipientProfile) {
-        alert("Recipient profile not loaded.");
-        return;
-    }
-
-    const response = await fetch(`${API_URL}/blood-requests`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            recipient_id: recipientProfile.recipient_id,
-            hospital_id: document.getElementById("requestHospitalId").value,
-            blood_type: document.getElementById("requestBloodType").value,
-            quantity_needed_ml: document.getElementById("requestQuantity").value,
-            priority_level: document.getElementById("requestPriority").value
-        })
-    });
-
-    const result = await response.json();
-
-    if (!result.success) {
-        alert(result.message || "Could not submit request.");
-        return;
-    }
-
-    alert("Blood request submitted successfully.");
-    this.reset();
-
-    await loadMyRequests();
-    await loadNotifications();
-});
-
-async function loadMyRequests() {
-    if (!recipientProfile) return;
-
-    const res = await fetch(`${API_URL}/blood-requests`);
-    const result = await res.json();
-
-    const myRequests = result.data.filter(r => r.recipient_id === recipientProfile.recipient_id);
-
-    let html = `
-        <div class="table-scroll">
-        <table class="data-table">
-            <thead><tr>
-                <th>Request ID</th>
-                <th>Blood type</th>
-                <th>Quantity</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Hospital</th>
-                <th>Date</th>
-                <th>Action</th>
-            </tr></thead><tbody>
-    `;
-
-    myRequests.forEach(r => {
-        html += `
-            <tr>
-                <td>${r.request_id}</td>
-                <td>${r.blood_type}</td>
-                <td>${r.quantity_needed_ml}</td>
-                <td><span class="status-pill">${r.priority_level}</span></td>
-                <td><span class="status-pill">${r.status}</span></td>
-                <td>${r.hospital_name}</td>
-                <td>${r.request_date}</td>
-                <td>
-                    ${r.status === "Pending"
-                        ? `<button type="button" class="btn btn-sm btn-danger" onclick="cancelRequest(${r.request_id})">Cancel</button>`
-                        : ""}
-                </td>
-            </tr>
-        `;
-    });
-
-    html += `</tbody></table></div>`;
-    document.getElementById("requestsTable").innerHTML = html;
 }
 
 async function cancelRequest(requestId) {
