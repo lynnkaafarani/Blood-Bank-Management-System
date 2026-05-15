@@ -89,8 +89,10 @@
     <section class="card">
         <h2>Register donation</h2>
         <form id="donationForm" class="form-row">
-            <input type="number" id="donor_id_donation" placeholder="Donor ID" required>
-            <select id="blood_type_donation" required>
+            <select id="donor_id_donation" required>
+    <option value="">Select donor</option>
+</select>
+
     <option value="">Select blood type</option>
     <option value="A+">A+</option>
     <option value="A-">A-</option>
@@ -176,7 +178,7 @@ const filterExpiry = document.getElementById("filterExpiry").value;
     result.data.forEach(b => {
         if (filterType && b.blood_type !== filterType) return;
 if (filterStatus && b.status !== filterStatus) return;
-if (filterExpiry && b.expiry_date !== filterExpiry) return;
+if (filterExpiry && String(b.expiry_date).slice(0, 10) !== filterExpiry) return;
         html += `
         <tr>
             <td>${b.blood_unit_id}</td>
@@ -304,11 +306,32 @@ async function rejectReq(id) {
    await loadRequests();
 await loadInventory();
 }
+async function loadDonors() {
 
+    const res = await fetch(`${API_URL}/donors`);
+    const result = await res.json();
+
+    const dropdown =
+        document.getElementById("donor_id_donation");
+
+    dropdown.innerHTML =
+        `<option value="">Select donor</option>`;
+
+    result.data.forEach(d => {
+
+        dropdown.innerHTML += `
+            <option value="${d.donor_id}">
+                ${d.first_name} ${d.last_name}
+                (${d.blood_type})
+            </option>
+        `;
+    });
+}
 async function init() {
     await loadStaffProfile();
     await loadInventory();
     await loadRequests();
+    await loadDonors();
 document.getElementById("urgentForm")
 .addEventListener("submit", async e => {
 
@@ -337,6 +360,7 @@ document.getElementById("urgentForm")
 
     e.target.reset();
 });
+
     document.getElementById("bloodForm").addEventListener("submit", async e => {
         e.preventDefault();
 

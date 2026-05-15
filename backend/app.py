@@ -1246,7 +1246,23 @@ def update_expired_blood():
 # =====================================================
 # STAFF
 # =====================================================
+@app.route("/api/donors")
+def get_donors():
 
+    return jsonify({
+        "success": True,
+        "data": query_db("""
+            SELECT
+                d.donor_id,
+                u.first_name,
+                u.last_name,
+                d.blood_type
+            FROM Donor d
+            JOIN UserAccount u
+                ON d.user_id = u.user_id
+            ORDER BY u.first_name, u.last_name
+        """)
+    })
 @app.route("/api/staff/<int:user_id>/profile")
 def staff_profile(user_id):
     data = query_db("""
@@ -1311,12 +1327,19 @@ def staff_register_donation():
             "message": "Unauthorized staff access."
         }), 403
 
-    blood_type = clean_blood_type(data.get("blood_type"))
-    if blood_type is None:
+    donor_info = query_db("""
+                          SELECT blood_type
+                          FROM Donor
+                          WHERE donor_id = %s
+                          """, (data.get("donor_id"),))
+
+    if not donor_info:
         return jsonify({
             "success": False,
-            "message": f"Invalid blood type. Accepted values: {', '.join(sorted(VALID_BLOOD_TYPES))}"
-        }), 400
+            "message": "Donor not found"
+        }), 404
+
+    blood_type = donor_info[0]["blood_type"]
 
     conn = None
     try:
