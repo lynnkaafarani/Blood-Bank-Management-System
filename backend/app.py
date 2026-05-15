@@ -274,8 +274,48 @@ def login():
 # =====================================================
 # ADMIN REQUIREMENTS
 # =====================================================
+def record_log(user_id, action_type, entity_type, entity_id, description):
+    if not user_id:
+        return
+
+    query_db("""
+        INSERT INTO ActivityLog
+        (user_id, action_type, entity_type, entity_id, description)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (user_id, action_type, entity_type, entity_id, description), fetch=False)
+
+
+@app.route("/api/admin/staff/<int:staff_id>", methods=["PUT"])
+def update_staff(staff_id):
+    data = request.json or {}
+
+    query_db("""
+        UPDATE HospitalStaff
+        SET staff_role = %s
+        WHERE staff_id = %s
+    """, (data.get("staff_role"), staff_id), fetch=False)
+
+    query_db("""
+        UPDATE UserAccount ua
+        JOIN HospitalStaff hs ON ua.user_id = hs.user_id
+        SET ua.phone = %s
+        WHERE hs.staff_id = %s
+    """, (data.get("phone"), staff_id), fetch=False)
+
+    record_log(
+        data.get("admin_user_id"),
+        "UPDATE",
+        "HospitalStaff",
+        staff_id,
+        "Staff account updated"
+    )
+
+    return jsonify({"success": True, "message": "Staff updated successfully"})
+
+
 @app.route("/api/admin/unlock-user/<int:user_id>", methods=["PUT"])
 def unlock_user(user_id):
+    data = request.json or {}
 
     query_db("""
         UPDATE UserAccount
@@ -285,32 +325,15 @@ def unlock_user(user_id):
         WHERE user_id = %s
     """, (user_id,), fetch=False)
 
-    return jsonify({
-        "success": True,
-        "message": "User account unlocked successfully"
-    })
-@app.route("/api/users")
-def get_users():
-    return jsonify({
-        "success": True,
-        "data": query_db("""
-            SELECT user_id, first_name, last_name, email, phone, role, account_status
-            FROM UserAccount
-            ORDER BY user_id
-        """)
-    })
+    record_log(
+        data.get("admin_user_id"),
+        "UPDATE",
+        "UserAccount",
+        user_id,
+        "User account unlocked"
+    )
 
-
-@app.route("/api/hospitals", methods=["GET"])
-def get_hospitals():
-    return jsonify({
-        "success": True,
-        "data": query_db("""
-            SELECT hospital_id, hospital_name, location, contact_info
-            FROM Hospital
-            ORDER BY hospital_name
-        """)
-    })
+    return jsonify({"success": True, "message": "User account unlocked successfully"})
 
 
 @app.route("/api/hospitals", methods=["POST"])
@@ -326,19 +349,15 @@ def add_hospital():
         data.get("contact_info")
     ), fetch=False)
 
+    record_log(
+        data.get("admin_user_id"),
+        "CREATE",
+        "Hospital",
+        hospital_id,
+        f"Hospital created: {data.get('hospital_name')}"
+    )
+
     return jsonify({"success": True, "hospital_id": hospital_id})
-
-
-@app.route("/api/activity-logs")
-def get_activity_logs():
-    return jsonify({
-        "success": True,
-        "data": query_db("""
-            SELECT log_id, user_id, action_type, entity_type, entity_id, description, created_at
-            FROM ActivityLog
-            ORDER BY created_at DESC
-        """)
-    })
 
 
 # =====================================================
@@ -1162,7 +1181,14 @@ def create_staff_account():
         data.get("hospital_id"),
         data.get("staff_role")
     ), fetch=False)
-
+    # inside create_staff_account(), before return:
+    record_log(
+        data.get("admin_user_id"),
+        "CREATE",
+        "HospitalStaff",
+        staff_id,
+        f"Staff account created: {email}"
+    )
     return jsonify({"success": True, "user_id": user_id, "staff_id": staff_id}), 201
 
 
@@ -1175,7 +1201,14 @@ def update_staff_status(user_id):
         SET account_status = %s
         WHERE user_id = %s AND role = 'HospitalStaff'
     """, (data.get("account_status"), user_id), fetch=False)
-
+    # inside update_staff_status(), after UPDATE:
+    record_log(
+        data.get("admin_user_id"),
+        "UPDATE",
+        "HospitalStaff",
+        user_id,
+        f"Staff status updated to {data.get('account_status')}"
+    )
     return jsonify({"success": True, "message": "Staff status updated"})
 
 
@@ -1186,7 +1219,16 @@ def delete_staff_account(staff_id):
         JOIN HospitalStaff hs ON u.user_id = hs.user_id
         WHERE hs.staff_id = %s
     """, (staff_id,), fetch=False)
+    # inside delete_staff_account(), before return:
+    data = request.json or {}
 
+    record_log(
+        data.get("admin_user_id"),
+        "DELETE",
+        "HospitalStaff",
+        staff_id,
+        "Staff account deleted"
+    )
     return jsonify({"success": True, "message": "Staff deleted"})
 
 # =====================================================

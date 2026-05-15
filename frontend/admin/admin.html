@@ -25,57 +25,71 @@
 <main class="app-main">
     <div class="layout-grid cols-2">
 
-    <section class="card span-2">
-        <h2>Signed in</h2>
-        <p id="userInfo"></p>
-    </section>
+        <section class="card span-2">
+            <h2>Signed in</h2>
+            <p id="userInfo"></p>
+        </section>
 
-    <section class="card span-2">
-        <h2>System users</h2>
-        <div id="usersTable">Loading users…</div>
-    </section>
+        <section class="card span-2">
+            <h2>System users</h2>
+            <div id="usersTable">Loading users…</div>
+        </section>
 
-    <section class="card span-2">
-        <h2>Hospitals</h2>
+        <section class="card span-2">
+            <h2>Hospitals</h2>
 
-        <form id="hospitalForm" class="form-row">
-            <input type="text" id="hospitalName" placeholder="Hospital name" required>
-            <input type="text" id="hospitalLocation" placeholder="Location" required>
-            <input type="text" id="hospitalContact" placeholder="Contact info" required>
-            <button type="submit" class="btn btn-primary">Add hospital</button>
-        </form>
+            <form id="hospitalForm" class="form-row">
+                <input type="text" id="hospitalName" placeholder="Hospital name" required>
+                <input type="text" id="hospitalLocation" placeholder="Location" required>
+                <input type="text" id="hospitalContact" placeholder="Contact info" required>
+                <button type="submit" class="btn btn-primary">Add hospital</button>
+            </form>
 
-        <div id="hospitalsTable">Loading hospitals…</div>
-    </section>
+            <div id="hospitalsTable">Loading hospitals…</div>
+        </section>
 
-    <section class="card span-2">
-        <h2>Hospital staff</h2>
+        <section class="card span-2">
+            <h2>Hospital staff</h2>
 
-        <form id="staffForm" class="form-row">
-            <input type="text" id="staffFirstName" placeholder="First name" required>
-            <input type="text" id="staffLastName" placeholder="Last name" required>
-            <input type="number" id="staffAge" placeholder="Age" required>
-            <select id="staffGender" required>
-                <option value="">Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-            </select>
-            <input type="email" id="staffEmail" placeholder="Email" required>
-            <input type="text" id="staffPhone" placeholder="Phone" required>
-            <input type="password" id="staffPassword" placeholder="Password" required>
-            <input type="number" id="staffHospitalId" placeholder="Hospital ID" required>
-            <input type="text" id="staffRole" placeholder="Staff role" required>
-            <button type="submit" class="btn btn-primary">Create staff</button>
-        </form>
+            <form id="staffForm" class="form-row">
+                <input type="text" id="staffFirstName" placeholder="First name" required>
+                <input type="text" id="staffLastName" placeholder="Last name" required>
+                <input type="number" id="staffAge" placeholder="Age" required>
 
-        <div id="staffTable">Loading staff…</div>
-    </section>
+                <select id="staffGender" required>
+                    <option value="">Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
 
-    <section class="card span-2">
-        <h2>Activity logs</h2>
-        <div id="logsTable">Loading logs…</div>
-    </section>
+                <input type="email" id="staffEmail" placeholder="Email" required>
+                <input type="text" id="staffPhone" placeholder="Phone" required>
+                <input type="password" id="staffPassword" placeholder="Password" required>
+
+                <select id="staffHospitalId" required>
+                    <option value="">Select hospital</option>
+                </select>
+
+                <select id="staffRole" required>
+                    <option value="">Select staff role</option>
+                    <option value="Nurse">Nurse</option>
+                    <option value="Lab Technician">Lab Technician</option>
+                    <option value="Blood Bank Officer">Blood Bank Officer</option>
+                    <option value="Request Coordinator">Request Coordinator</option>
+                    <option value="Inventory Manager">Inventory Manager</option>
+                </select>
+
+                <button type="submit" class="btn btn-primary">Create staff</button>
+            </form>
+
+            <div id="staffTable">Loading staff…</div>
+        </section>
+
+        <section class="card span-2">
+            <h2>Activity logs</h2>
+            <div id="logsTable">Loading logs…</div>
+        </section>
 
     </div>
 </main>
@@ -103,14 +117,17 @@ async function loadUsers() {
     let html = `
         <div class="table-scroll">
         <table class="data-table">
-            <thead><tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr></thead><tbody>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
     `;
 
     result.data.forEach(u => {
@@ -122,9 +139,18 @@ async function loadUsers() {
                 <td>${u.role}</td>
                 <td><span class="status-pill">${u.account_status}</span></td>
                 <td>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="unlockUser(${u.user_id})">
-                        Unlock
-                    </button>
+                    ${
+                        u.account_status === "Locked"
+                        ? `
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-secondary"
+                                onclick="unlockUser(${u.user_id})">
+                                Unlock
+                            </button>
+                          `
+                        : "—"
+                    }
                 </td>
             </tr>
         `;
@@ -141,12 +167,15 @@ async function loadHospitals() {
     let html = `
         <div class="table-scroll">
         <table class="data-table">
-            <thead><tr>
-                <th>ID</th>
-                <th>Hospital</th>
-                <th>Location</th>
-                <th>Contact</th>
-            </tr></thead><tbody>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Hospital</th>
+                    <th>Location</th>
+                    <th>Contact</th>
+                </tr>
+            </thead>
+            <tbody>
     `;
 
     result.data.forEach(h => {
@@ -164,6 +193,23 @@ async function loadHospitals() {
     document.getElementById("hospitalsTable").innerHTML = html;
 }
 
+async function populateHospitalDropdown() {
+    const res = await fetch(`${API_URL}/hospitals`);
+    const result = await res.json();
+
+    const dropdown = document.getElementById("staffHospitalId");
+
+    dropdown.innerHTML = `<option value="">Select hospital</option>`;
+
+    result.data.forEach(hospital => {
+        dropdown.innerHTML += `
+            <option value="${hospital.hospital_id}">
+                ${hospital.hospital_name}
+            </option>
+        `;
+    });
+}
+
 async function loadLogs() {
     const res = await fetch(`${API_URL}/activity-logs`);
     const result = await res.json();
@@ -171,13 +217,16 @@ async function loadLogs() {
     let html = `
         <div class="table-scroll">
         <table class="data-table">
-            <thead><tr>
-                <th>ID</th>
-                <th>Action</th>
-                <th>Entity</th>
-                <th>Description</th>
-                <th>Date</th>
-            </tr></thead><tbody>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Action</th>
+                    <th>Entity</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
     `;
 
     result.data.forEach(log => {
@@ -202,17 +251,29 @@ document.getElementById("hospitalForm").addEventListener("submit", async functio
     const hospital = {
         hospital_name: document.getElementById("hospitalName").value,
         location: document.getElementById("hospitalLocation").value,
-        contact_info: document.getElementById("hospitalContact").value
+        contact_info: document.getElementById("hospitalContact").value,
+           admin_user_id: user.user_id
     };
 
-    await fetch(`${API_URL}/hospitals`, {
+    const res = await fetch(`${API_URL}/hospitals`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(hospital)
     });
 
+    const result = await res.json();
+
+    if (!result.success) {
+        alert(result.message || "Could not add hospital");
+        return;
+    }
+
+    alert("Hospital added successfully");
+
     this.reset();
     loadHospitals();
+    populateHospitalDropdown();
+    loadLogs();
 });
 
 async function loadStaff() {
@@ -222,15 +283,18 @@ async function loadStaff() {
     let html = `
         <div class="table-scroll">
         <table class="data-table">
-            <thead><tr>
-                <th>Staff ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Hospital</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr></thead><tbody>
+            <thead>
+                <tr>
+                    <th>Staff ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Hospital</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
     `;
 
     result.data.forEach(s => {
@@ -243,9 +307,18 @@ async function loadStaff() {
                 <td>${s.staff_role}</td>
                 <td><span class="status-pill">${s.account_status}</span></td>
                 <td>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="setStaffStatus(${s.user_id}, 'Active')">Activate</button>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="setStaffStatus(${s.user_id}, 'Inactive')">Deactivate</button>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteStaff(${s.staff_id})">Delete</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="setStaffStatus(${s.user_id}, 'Active')">
+                        Activate
+                    </button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="setStaffStatus(${s.user_id}, 'Inactive')">
+                        Deactivate
+                    </button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="editStaff(${s.staff_id})">
+                        Edit
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteStaff(${s.staff_id})">
+                        Delete
+                    </button>
                 </td>
             </tr>
         `;
@@ -258,17 +331,18 @@ async function loadStaff() {
 document.getElementById("staffForm").addEventListener("submit", async function(e) {
     e.preventDefault();
 
-    const staff = {
-        first_name: document.getElementById("staffFirstName").value,
-        last_name: document.getElementById("staffLastName").value,
-        age: document.getElementById("staffAge").value,
-        gender: document.getElementById("staffGender").value,
-        email: document.getElementById("staffEmail").value,
-        phone: document.getElementById("staffPhone").value,
-        password: document.getElementById("staffPassword").value,
-        hospital_id: document.getElementById("staffHospitalId").value,
-        staff_role: document.getElementById("staffRole").value
-    };
+   const staff = {
+    first_name: document.getElementById("staffFirstName").value,
+    last_name: document.getElementById("staffLastName").value,
+    age: document.getElementById("staffAge").value,
+    gender: document.getElementById("staffGender").value,
+    email: document.getElementById("staffEmail").value,
+    phone: document.getElementById("staffPhone").value,
+    password: document.getElementById("staffPassword").value,
+    hospital_id: document.getElementById("staffHospitalId").value,
+    staff_role: document.getElementById("staffRole").value,
+    admin_user_id: user.user_id
+};
 
     const res = await fetch(`${API_URL}/admin/staff`, {
         method: "POST",
@@ -284,51 +358,108 @@ document.getElementById("staffForm").addEventListener("submit", async function(e
     }
 
     alert("Staff created successfully");
-    this.reset();
 
+    this.reset();
     loadStaff();
     loadUsers();
+    loadLogs();
 });
 
-async function setStaffStatus(userId, status) {
-    await fetch(`${API_URL}/admin/staff/${userId}/status`, {
+async function editStaff(staffId) {
+    const newRole = prompt(
+        "Enter new staff role:\nNurse, Lab Technician, Blood Bank Officer, Request Coordinator, Inventory Manager"
+    );
+
+    if (!newRole) return;
+
+    const newPhone = prompt("Enter new phone number:");
+
+    if (!newPhone) return;
+
+    const res = await fetch(`${API_URL}/admin/staff/${staffId}`, {
         method: "PUT",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({account_status: status})
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            staff_role: newRole,
+            phone: newPhone,
+              admin_user_id: user.user_id
+        })
     });
+
+    const result = await res.json();
+
+    alert(result.message || "Staff updated");
 
     loadStaff();
     loadUsers();
+    loadLogs();
+}
+
+async function setStaffStatus(userId, status) {
+    const res = await fetch(`${API_URL}/admin/staff/${userId}/status`, {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+    account_status: status,
+    admin_user_id: user.user_id
+})
+    });
+
+    const result = await res.json();
+
+    alert(result.message || "Staff status updated");
+
+    loadStaff();
+    loadUsers();
+    loadLogs();
 }
 
 async function deleteStaff(staffId) {
     if (!confirm("Delete this staff account?")) return;
 
-    await fetch(`${API_URL}/admin/staff/${staffId}`, {
-        method: "DELETE"
-    });
-
-    loadStaff();
-    loadUsers();
-}
-
-async function unlockUser(userId) {
-    const res = await fetch(`${API_URL}/admin/unlock-user/${userId}`, {
-        method: "PUT"
-    });
+    const res = await fetch(`${API_URL}/admin/staff/${staffId}`, {
+    method: "DELETE",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+        admin_user_id: user.user_id
+    })
+});
 
     const result = await res.json();
 
-    alert(result.message);
+    alert(result.message || "Staff deleted");
+
+    loadStaff();
+    loadUsers();
+    loadLogs();
+}
+
+async function unlockUser(userId) {
+   const res = await fetch(`${API_URL}/admin/unlock-user/${userId}`, {
+    method: "PUT",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+        admin_user_id: user.user_id
+    })
+});
+
+    const result = await res.json();
+
+    alert(result.message || "User unlocked");
 
     loadUsers();
     loadStaff();
+    loadLogs();
 }
 
+populateHospitalDropdown();
 loadUsers();
 loadHospitals();
 loadStaff();
 loadLogs();
 </script>
+
 </body>
 </html>
