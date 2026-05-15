@@ -542,6 +542,16 @@ def update_donor_profile(donor_id):
 
     return jsonify({"success": True, "message": "Donor profile updated"})
 
+@app.route("/api/debug-urgent/<path:blood_type>")
+def debug_urgent(blood_type):
+    donors = query_db("""
+        SELECT d.donor_id, u.user_id, u.account_status, d.eligibility_status
+        FROM Donor d
+        JOIN UserAccount u ON d.user_id = u.user_id
+        WHERE d.blood_type = %s
+    """, (blood_type,))
+    return jsonify({"donors": donors})
+
 
 # =====================================================
 # APPOINTMENTS
