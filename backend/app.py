@@ -274,6 +274,40 @@ def login():
 # =====================================================
 # ADMIN REQUIREMENTS
 # =====================================================
+@app.route("/api/users")
+def get_users():
+    return jsonify({
+        "success": True,
+        "data": query_db("""
+            SELECT user_id, first_name, last_name, email, phone, role, account_status
+            FROM UserAccount
+            ORDER BY user_id
+        """)
+    })
+
+
+@app.route("/api/hospitals", methods=["GET"])
+def get_hospitals():
+    return jsonify({
+        "success": True,
+        "data": query_db("""
+            SELECT hospital_id, hospital_name, location, contact_info
+            FROM Hospital
+            ORDER BY hospital_name
+        """)
+    })
+
+
+@app.route("/api/activity-logs")
+def get_activity_logs():
+    return jsonify({
+        "success": True,
+        "data": query_db("""
+            SELECT log_id, user_id, action_type, entity_type, entity_id, description, created_at
+            FROM ActivityLog
+            ORDER BY created_at DESC
+        """)
+    })
 def record_log(user_id, action_type, entity_type, entity_id, description):
     if not user_id:
         return
