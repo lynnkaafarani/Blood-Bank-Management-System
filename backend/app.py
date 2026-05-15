@@ -180,7 +180,8 @@ def login():
     password = data.get("password")
 
     user = query_db("""
-        SELECT user_id, first_name, last_name, email, role, password_hash, account_status
+        SELECT user_id, first_name, last_name, email, role, password_hash,
+               account_status, failed_login_attempts, locked_until
         FROM UserAccount
         WHERE email = %s
     """, (email,))
@@ -190,23 +191,60 @@ def login():
 
     user = user[0]
 
+    if user["locked_until"]:
+        return jsonify({
+            "success": False,
+            "message": "Account locked due to 5 failed login attempts. Contact admin."
+        }), 403
+
     if user["account_status"] != "Active":
         return jsonify({"success": False, "message": "Account is not active"}), 403
 
     if user["password_hash"] != password:
-        return jsonify({"success": False, "message": "Invalid email or password"}), 401
+        failed_attempts = user["failed_login_attempts"] + 1
+
+        if failed_attempts >= 5:
+            query_db("""
+                UPDATE UserAccount
+                SET failed_login_attempts = %s,
+                    account_status = 'Locked',
+                    locked_until = NOW()
+                WHERE user_id = %s
+            """, (failed_attempts, user["user_id"]), fetch=False)
+
+            return jsonify({
+                "success": False,
+                "message": "Account locked after 5 failed login attempts."
+            }), 403
+
+        query_db("""
+            UPDATE UserAccount
+            SET failed_login_attempts = %s
+            WHERE user_id = %s
+        """, (failed_attempts, user["user_id"]), fetch=False)
+
+        return jsonify({
+            "success": False,
+            "message": f"Invalid email or password. Attempt {failed_attempts}/5"
+        }), 401
+
+    query_db("""
+        UPDATE UserAccount
+        SET failed_login_attempts = 0,
+            locked_until = NULL
+        WHERE user_id = %s
+    """, (user["user_id"],), fetch=False)
 
     return jsonify({
         "success": True,
         "message": "Login successful",
         "user": {
-            "user_id":   user["user_id"],
+            "user_id": user["user_id"],
             "full_name": f"{user['first_name']} {user['last_name']}",
-            "email":     user["email"],
-            "role":      user["role"]
+            "email": user["email"],
+            "role": user["role"]
         }
     })
-
 
 # =====================================================
 # ADMIN REQUIREMENTS
