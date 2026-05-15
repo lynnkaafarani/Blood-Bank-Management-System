@@ -88,11 +88,22 @@ async function loadBloodInventory() {
     });
 
     // Check if no results found
+    // Check if no results found
     if (filteredData.length === 0) {
+        // Get the blood type the user typed in
+        const searchedBloodType = document.getElementById("filterBloodType").value.trim().toUpperCase();
+        
+        // Default message
+        let displayMessage = "⚠️ No blood available.";
+        
+        // If they searched for a specific blood type, update the message
+        if (searchedBloodType) {
+            displayMessage = `⚠️ No available blood in this specific blood type (${searchedBloodType}).`;
+        }
+
         document.getElementById("inventoryTable").innerHTML = `
-            <div class="no-results-message">
-                <p>⚠️ No blood units available matching your search criteria.</p>
-                <p class="inline-note">Try adjusting your filters or check back later.</p>
+            <div class="no-results-message" style="text-align: center; padding: 20px;">
+                <p>${displayMessage}</p>
             </div>
         `;
         return;
