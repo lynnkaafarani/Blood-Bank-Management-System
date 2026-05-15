@@ -5,7 +5,7 @@ from mysql.connector import Error
 from config import Config
 import os
 import re
-
+from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 CORS(app)
 
@@ -177,7 +177,8 @@ def debug_config():
 def login():
     data = request.json or {}
     email = data.get("email", "").strip().lower()
-    password = data.get("password")
+    raw_password = data.get("password")
+    password = generate_password_hash(raw_password)
 
     user = query_db("""
         SELECT user_id, first_name, last_name, email, role, password_hash,
@@ -200,7 +201,7 @@ def login():
     if user["account_status"] != "Active":
         return jsonify({"success": False, "message": "Account is not active"}), 403
 
-    if user["password_hash"] != password:
+    if not check_password_hash(user["password_hash"], password):
         failed_attempts = (user["failed_login_attempts"] or 0) + 1
 
         if failed_attempts >= 5:
@@ -1124,7 +1125,26 @@ def delete_staff_account(staff_id):
 
     return jsonify({"success": True, "message": "Staff deleted"})
 
+@app.route("/api/admin/hash-existing-passwords")
+def hash_existing_passwords():
+    users = query_db("SELECT user_id, password_hash FROM UserAccount")
 
+    for user in users:
+        current_password = user["password_hash"]
+
+        if not current_password.startswith("scrypt:") and not current_password.startswith("pbkdf2:"):
+            hashed = generate_password_hash(current_password)
+
+            query_db("""
+                UPDATE UserAccount
+                SET password_hash = %s
+                WHERE user_id = %s
+            """, (hashed, user["user_id"]), fetch=False)
+
+    return jsonify({
+        "success": True,
+        "message": "Existing passwords hashed successfully"
+    })
 # =====================================================
 # RUN
 # =====================================================
