@@ -112,6 +112,29 @@ def query_db(query, params=None, fetch=True):
 # =====================================================
 # UNIQUENESS HELPERS
 # =====================================================
+from datetime import date, datetime, timedelta
+
+def check_donor_eligibility(donor):
+    if donor.get("is_active", 1) == 0:
+        return False, "Donor inactive"
+
+    dob = donor.get("dob")
+    if not dob:
+        return False, "Missing DOB"
+
+    age = (date.today() - dob).days // 365
+    if age < 18:
+        return False, "Must be 18+"
+
+    last = donor.get("last_donation_date")
+    if last:
+        if isinstance(last, str):
+            last = datetime.strptime(last, "%Y-%m-%d").date()
+
+        if date.today() - last < timedelta(days=56):
+            return False, "Wait 8 weeks between donations"
+
+    return True, "Eligible"
 
 def email_exists(email: str, role: str, exclude_user_id: int = None) -> bool:
     """True if email is already taken within the same role."""
@@ -487,10 +510,42 @@ def get_appointments():
         "data": query_db("SELECT * FROM vw_appointments ORDER BY appointment_datetime DESC")
     })
 
+@app.route("/api/appointments/<int:appointment_id>/cancel", methods=["PUT"])
+def cancel_appointment(appointment_id):
 
+    updated = query_db("""
+        UPDATE Appointment
+        SET status = 'Cancelled'
+        WHERE appointment_id = %s AND status = 'Scheduled'
+    """, (appointment_id,), fetch=False)
+
+    if updated == 0:
+        return jsonify({
+            "success": False,
+            "message": "Appointment not found or already cancelled"
+        }), 400
+
+    return jsonify({
+        "success": True,
+        "message": "Appointment cancelled"
+    })
 @app.route("/api/appointments", methods=["POST"])
 def create_appointment():
     data = request.json or {}
+    donor = query_db("""
+                     SELECT d.*, u.age, u.is_active
+                     FROM Donor d
+                              JOIN UserAccount u ON d.user_id = u.user_id
+                     WHERE d.donor_id = %s
+                     """, (data.get("donor_id"),))
+
+    if not donor:
+        return jsonify({"success": False, "message": "Donor not found"}), 404
+
+    eligible, reason = check_donor_eligibility(donor[0])
+
+    if not eligible:
+        return jsonify({"success": False, "message": reason}), 403
 
     appointment_id = query_db("""
         INSERT INTO Appointment
@@ -899,11 +954,19 @@ def get_notifications(user_id):
 
 @app.route("/api/notifications/<int:notification_id>/read", methods=["PUT"])
 def mark_notification_read(notification_id):
-    query_db("""
-        UPDATE Notification SET is_read = TRUE WHERE notification_id = %s
+    result = query_db("""
+        UPDATE Notification
+        SET is_read = TRUE
+        WHERE notification_id = %s AND is_read = FALSE
     """, (notification_id,), fetch=False)
 
-    return jsonify({"success": True, "message": "Notification marked as read"})
+    if result == 0:
+        return jsonify({
+            "success": True,
+            "message": "Already marked as read"
+        })
+
+    return jsonify({"success": True, "message": "Marked as read"})
 
 
 # =====================================================
