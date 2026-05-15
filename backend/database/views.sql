@@ -1,4 +1,4 @@
-USE BBMS_SE;
+USE railway;
 
 DROP VIEW IF EXISTS vw_donor_profiles;
 CREATE VIEW vw_donor_profiles AS

@@ -1,4 +1,4 @@
-USE BBMS_SE;
+USE railway;
 
 DELIMITER //
 

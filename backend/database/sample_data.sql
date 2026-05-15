@@ -1,4 +1,4 @@
-USE BBMS_SE;
+USE railway;
 
 -- =====================================================
 -- SAMPLE DATA - 3NF SRS VERSION
@@ -93,3 +93,8 @@ VALUES
 (2, 'CREATE', 'BloodUnit', 1, 'Blood unit added to inventory.');
 
 SELECT 'Sample data inserted successfully' AS message;
+
+USE BBMS_SE;
+SELECT * FROM UserAccount;
+SELECT * FROM Hospital;
+SELECT * FROM BloodUnit;

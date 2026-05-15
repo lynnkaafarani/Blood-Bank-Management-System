@@ -2,9 +2,9 @@
 -- Blood Bank Management System - 3NF SRS Version
 -- =====================================================
 
-DROP DATABASE IF EXISTS BBMS_SE;
-CREATE DATABASE BBMS_SE;
-USE BBMS_SE;
+DROP DATABASE IF EXISTS railway;
+CREATE DATABASE railway;
+USE railway;
 
 -- =========================
 -- USER ACCOUNT
