@@ -612,7 +612,19 @@ def create_appointment():
         }), 404
 
     donor = donor[0]
+    existing_appointment = query_db("""
+                                    SELECT appointment_id
+                                    FROM Appointment
+                                    WHERE donor_id = %s
+                                      AND status = 'Scheduled'
+                                      AND appointment_datetime >= NOW() LIMIT 1
+                                    """, (donor_id,))
 
+    if existing_appointment:
+        return jsonify({
+            "success": False,
+            "message": "You already have a scheduled donation appointment."
+        }), 409
     if donor["eligibility_status"] != "Eligible":
         return jsonify({
             "success": False,

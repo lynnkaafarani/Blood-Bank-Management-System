@@ -149,6 +149,7 @@ async function loadAppointments() {
                 <th>Hospital</th>
                 <th>Status</th>
                 <th>Notes</th>
+                <th>Action</th>
             </tr></thead><tbody>
     `;
 
@@ -160,6 +161,21 @@ async function loadAppointments() {
                 <td>${a.hospital_name}</td>
                 <td><span class="status-pill">${a.status}</span></td>
                 <td>${a.notes || ""}</td>
+
+<td>
+    ${
+        a.status === "Scheduled"
+        ? `
+            <button
+                type="button"
+                class="btn btn-sm btn-secondary"
+                onclick="cancelAppointment(${a.appointment_id})">
+                Cancel
+            </button>
+          `
+        : ""
+    }
+</td>
             </tr>
         `;
     });
@@ -167,7 +183,25 @@ async function loadAppointments() {
     html += `</tbody></table></div>`;
     document.getElementById("appointmentsTable").innerHTML = html;
 }
+async function cancelAppointment(appointmentId) {
 
+    if (!confirm("Cancel this appointment?")) {
+        return;
+    }
+
+    const res = await fetch(
+        `${API_URL}/appointments/${appointmentId}/cancel`,
+        {
+            method: "PUT"
+        }
+    );
+
+    const result = await res.json();
+
+    alert(result.message || "Appointment cancelled");
+
+    await loadAppointments();
+}
 async function loadDonationHistory() {
     if (!donorProfile) return;
 
@@ -229,9 +263,20 @@ async function loadNotifications() {
             <td>${n.type}</td>
             <td>${n.notification_date}</td>
             <td>${n.is_read ? "Yes" : "No"}</td>
-            <td>
-                <button type="button" class="btn btn-sm btn-secondary" onclick="markNotificationRead(${n.notification_id})">Mark read</button>
-            </td>
+           <td>
+    ${
+        !n.is_read
+        ? `
+            <button
+                type="button"
+                class="btn btn-sm btn-secondary"
+                onclick="markNotificationRead(${n.notification_id})">
+                Mark read
+            </button>
+          `
+        : ""
+    }
+</td>
         </tr>
     `;
 });
