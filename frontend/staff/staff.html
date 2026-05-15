@@ -196,19 +196,23 @@ if (filterExpiry && b.expiry_date !== filterExpiry) return;
 }
 
 async function editUnit(id) {
+
     const qty = prompt("New quantity:");
+
     if (!qty || Number(qty) <= 0) {
-    alert("Quantity must be greater than 0.");
-    return;
-}
+        alert("Quantity must be greater than 0.");
+        return;
+    }
+
     const status = prompt("Status (Available/Used/Expired):");
+
+    const expiry = prompt("New expiry date (YYYY-MM-DD):");
 
     await fetch(`${API_URL}/blood-units/${id}`, {
         method: "PUT",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
             quantity_ml: qty,
-            const expiry = prompt("New expiry date (YYYY-MM-DD):");
             expiry_date: expiry,
             status: status
         })
