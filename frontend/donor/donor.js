@@ -14,17 +14,16 @@ function logout() {
 }
 
 async function loadDonorProfile() {
-    const res = await fetch(`${API_URL}/donors/by-user/${user.user_id}`);
+    const res = await fetch(`${API_URL}/donors`);
     const result = await res.json();
 
-    if (!result.success) {
+    donorProfile = result.data.find(d => d.user_id === user.user_id);
+
+
+    if (!donorProfile) {
         document.getElementById("profileBox").innerHTML = "Donor profile not found.";
         return;
     }
-
-    donorProfile = result.data;
-    // rest stays the same...
-}
 
     document.getElementById("userInfo").textContent =
         `${user.full_name} (${user.email})`;
