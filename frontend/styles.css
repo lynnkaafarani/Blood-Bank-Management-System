@@ -2,6 +2,12 @@
 
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,500&display=swap");
 
+
+
+.faq-button:hover {
+    transform: scale(1.1);
+    background-color: #8e0000;
+}
 :root {
     --font-sans: "DM Sans", system-ui, sans-serif;
     --font-display: "Fraunces", Georgia, serif;
