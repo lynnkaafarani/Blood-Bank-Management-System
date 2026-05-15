@@ -177,8 +177,8 @@ def debug_config():
 def login():
     data = request.json or {}
     email = data.get("email", "").strip().lower()
-    raw_password = data.get("password")
-    password = generate_password_hash(raw_password)
+    password = data.get("password")
+
 
     user = query_db("""
         SELECT user_id, first_name, last_name, email, role, password_hash,
@@ -407,7 +407,7 @@ def register_donor():
         age,
         data.get("gender"),
         email,
-        data.get("password"),
+        generate_password_hash(data.get("password")),
         phone
     ), fetch=False)
 
@@ -578,7 +578,7 @@ def register_recipient():
         age,
         data.get("gender"),
         email,
-        data.get("password"),
+        generate_password_hash(data.get("password")),
         phone
     ), fetch=False)
 
@@ -1084,7 +1084,7 @@ def create_staff_account():
         age,
         gender,
         email,
-        data.get("password"),
+        generate_password_hash(data.get("password")),
         phone
     ), fetch=False)
 
