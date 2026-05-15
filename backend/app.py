@@ -1357,7 +1357,30 @@ def delete_staff_account(staff_id):
         "Staff account deleted"
     )
     return jsonify({"success": True, "message": "Staff deleted"})
+# MOH
+@app.route("/api/create-ministry-user")
+def create_ministry_user():
+    password_hash = generate_password_hash("password123")
 
+    user_id = query_db("""
+        INSERT INTO UserAccount
+        (first_name, last_name, age, gender, email, password_hash, phone, role, account_status)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, 'MinistryOfHealth', 'Active')
+    """, (
+        "Ministry",
+        "Health",
+        40,
+        "Other",
+        "moh@bbms.com",
+        password_hash,
+        "03111111"
+    ), fetch=False)
+
+    return jsonify({
+        "success": True,
+        "user_id": user_id,
+        "message": "Ministry user created"
+    })
 # =====================================================
 # RUN
 # =====================================================
