@@ -394,7 +394,20 @@ def add_hospital():
 # =====================================================
 # DONORS
 # =====================================================
-
+@app.route("/api/donors/by-user/<int:user_id>")
+def get_donor_by_user(user_id):
+    data = query_db("""
+        SELECT d.donor_id, d.blood_type, d.health_status, d.weight_kg,
+               d.medication_restricted, d.eligibility_status, d.last_donation_date,
+               u.first_name, u.last_name, u.phone,
+               CONCAT(u.first_name, ' ', u.last_name) AS full_name
+        FROM Donor d
+        JOIN UserAccount u ON d.user_id = u.user_id
+        WHERE d.user_id = %s
+    """, (user_id,))
+    if not data:
+        return jsonify({"success": False, "message": "Donor not found"}), 404
+    return jsonify({"success": True, "data": data[0]})
 @app.route("/api/donors/<int:donor_id>/history")
 def donor_history(donor_id):
     return jsonify({
@@ -406,7 +419,6 @@ def donor_history(donor_id):
             ORDER BY donation_date DESC
         """, (donor_id,))
     })
-
 
 @app.route("/api/donors/register", methods=["POST"])
 def register_donor():
@@ -529,6 +541,16 @@ def update_donor_profile(donor_id):
     ), fetch=False)
 
     return jsonify({"success": True, "message": "Donor profile updated"})
+
+@app.route("/api/debug-urgent/<path:blood_type>")
+def debug_urgent(blood_type):
+    donors = query_db("""
+        SELECT d.donor_id, u.user_id, u.account_status, d.eligibility_status
+        FROM Donor d
+        JOIN UserAccount u ON d.user_id = u.user_id
+        WHERE d.blood_type = %s
+    """, (blood_type,))
+    return jsonify({"donors": donors})
 
 
 # =====================================================
@@ -1023,13 +1045,14 @@ def notify_urgent_shortage():
     """, (blood_type,))
 
     for donor in donors:
+        print(f"Sending to user_id: {donor['user_id']}", flush=True)
         query_db("""
-            INSERT INTO Notification (user_id, message, type, is_read)
-            VALUES (%s, %s, 'Urgent Shortage', FALSE)
-        """, (
-            donor["user_id"],
-            f"Urgent blood shortage alert for blood type {blood_type}. Please consider donating."
-        ), fetch=False)
+                 INSERT INTO Notification (user_id, message, type, is_read)
+                 VALUES (%s, %s, 'Urgent Shortage', FALSE)
+                 """, (
+                     donor["user_id"],
+                     f"Urgent blood shortage alert for blood type {blood_type}. Please consider donating."
+                 ), fetch=False)
 
     return jsonify({
         "success": True,
@@ -1099,7 +1122,22 @@ def get_donors():
     return jsonify({
         "success": True,
         "data": query_db("""
-            SELECT d.donor_id, u.first_name, u.last_name, d.blood_type
+            SELECT
+                d.donor_id,
+                d.user_id,
+                u.first_name,
+                u.last_name,
+                CONCAT(u.first_name, ' ', u.last_name) AS full_name,
+                u.email,
+                u.phone,
+                u.age,
+                u.gender,
+                d.blood_type,
+                d.health_status,
+                d.weight_kg,
+                d.medication_restricted,
+                d.last_donation_date,
+                d.eligibility_status
             FROM Donor d
             JOIN UserAccount u ON d.user_id = u.user_id
             ORDER BY u.first_name, u.last_name
