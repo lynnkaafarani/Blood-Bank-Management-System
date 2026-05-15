@@ -52,8 +52,17 @@
                     <option value="Donor">Donor</option>
                     <option value="Recipient">Recipient</option>
                 </select>
-
-                <input type="text" id="signupBloodType" placeholder="Blood type (e.g. O+)" required>
+<select id="signupBloodType" required>
+    <option value="">Select blood type</option>
+    <option value="A+">A+</option>
+    <option value="A-">A-</option>
+    <option value="B+">B+</option>
+    <option value="B-">B-</option>
+    <option value="AB+">AB+</option>
+    <option value="AB-">AB-</option>
+    <option value="O+">O+</option>
+    <option value="O-">O-</option>
+</select>
                 <div id="donorFields" style="display:none;">
     <input type="number" id="signupWeight" placeholder="Weight (kg)" min="1">
 </div>
