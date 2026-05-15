@@ -406,7 +406,20 @@ def donor_history(donor_id):
             ORDER BY donation_date DESC
         """, (donor_id,))
     })
-
+@app.route("/api/donors/by-user/<int:user_id>")
+def get_donor_by_user(user_id):
+    data = query_db("""
+        SELECT d.donor_id, d.blood_type, d.health_status, d.weight_kg,
+               d.medication_restricted, d.eligibility_status, d.last_donation_date,
+               u.first_name, u.last_name, u.phone,
+               CONCAT(u.first_name, ' ', u.last_name) AS full_name
+        FROM Donor d
+        JOIN UserAccount u ON d.user_id = u.user_id
+        WHERE d.user_id = %s
+    """, (user_id,))
+    if not data:
+        return jsonify({"success": False, "message": "Donor not found"}), 404
+    return jsonify({"success": True, "data": data[0]})
 
 @app.route("/api/donors/register", methods=["POST"])
 def register_donor():
