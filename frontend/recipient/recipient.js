@@ -67,7 +67,6 @@ document.getElementById("profileForm").addEventListener("submit", async function
     await loadRecipientProfile();
 });
 
-// Handle Blood Request Submission (FR-REC-005)
 document.getElementById("requestForm").addEventListener("submit", async function(e) {
     e.preventDefault();
 
@@ -77,9 +76,9 @@ document.getElementById("requestForm").addEventListener("submit", async function
     }
 
     const hospitalId = document.getElementById("requestHospitalId").value.trim();
-    const bloodType = document.getElementById("requestBloodType").value.trim();
-    const quantity = document.getElementById("requestQuantity").value.trim();
-    const priority = document.getElementById("requestPriority").value;
+    const bloodType  = document.getElementById("requestBloodType").value.trim();
+    const quantity   = document.getElementById("requestQuantity").value.trim();
+    const priority   = document.getElementById("requestPriority").value;
 
     if (!hospitalId || !bloodType || !quantity) {
         alert("All fields are required.");
@@ -90,11 +89,11 @@ document.getElementById("requestForm").addEventListener("submit", async function
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
-            recipient_id: recipientProfile.recipient_id,
-            hospital_id: hospitalId,
-            blood_type: bloodType,
+            recipient_id:     recipientProfile.recipient_id,
+            hospital_id:      hospitalId,
+            blood_type:       bloodType,
             quantity_needed_ml: quantity,
-            priority_level: priority
+            priority_level:   priority
         })
     });
 
@@ -111,54 +110,45 @@ document.getElementById("requestForm").addEventListener("submit", async function
 });
 
 async function loadBloodInventory() {
-    const bloodType = document.getElementById("filterBloodType").value.toLowerCase();
-    const location = document.getElementById("filterLocation").value.toLowerCase();
+    const bloodType      = document.getElementById("filterBloodType").value.toLowerCase();
+    const location       = document.getElementById("filterLocation").value.toLowerCase();
     const hospitalSearch = document.getElementById("filterHospital").value.toLowerCase();
-    const date = document.getElementById("filterDate").value;
-    const status = document.getElementById("filterStatus").value;
+    const date           = document.getElementById("filterDate").value;
+    const status         = document.getElementById("filterStatus").value;
 
-    const res = await fetch(`${API_URL}/blood-inventory`);
+    const res    = await fetch(`${API_URL}/blood-inventory`);
     const result = await res.json();
 
     const filteredData = result.data.filter(b => {
-        if (bloodType && !b.blood_type.toLowerCase().includes(bloodType)) return false;
-        if (location && !b.location.toLowerCase().includes(location)) return false;
-        if (hospitalSearch && !b.hospital_name.toLowerCase().includes(hospitalSearch) && !b.hospital_id.toString().includes(hospitalSearch)) return false;
-        if (status && b.status !== status) return false;
-        if (date && b.expiry_date < date) return false;
+        if (bloodType      && !b.blood_type.toLowerCase().includes(bloodType))                                           return false;
+        if (location       && !b.location.toLowerCase().includes(location))                                              return false;
+        if (hospitalSearch && !b.hospital_name.toLowerCase().includes(hospitalSearch)
+                           && !b.hospital_id.toString().includes(hospitalSearch))                                        return false;
+        if (status         && b.status !== status)                                                                       return false;
+        if (date           && b.expiry_date < date)                                                                      return false;
         return true;
     });
 
-    // Dynamic clean error message block
     if (filteredData.length === 0) {
         const searchedBloodType = document.getElementById("filterBloodType").value.trim().toUpperCase();
-        let displayMessage = "⚠️ No blood available.";
-        
-        if (searchedBloodType) {
-            displayMessage = `⚠️ No available blood in this specific blood type (${searchedBloodType}).`;
-        }
+        const displayMessage = searchedBloodType
+            ? `⚠️ No available blood for blood type ${searchedBloodType}.`
+            : "⚠️ No blood units match your filters.";
 
         document.getElementById("inventoryTable").innerHTML = `
-            <div class="no-results-message" style="text-align: center; padding: 20px;">
-                <p>${displayMessage}</p>
-                <p class="inline-note">Try adjusting your filters or check back later.</p>
-            </div>
+            <p class="muted" style="text-align:center; padding:20px;">
+                ${displayMessage}<br>
+                <small>Try adjusting your filters or check back later.</small>
+            </p>
         `;
         return;
     }
 
     let html = `
-        <div class="table-scroll">
-        <table class="data-table">
+        <div class="table-scroll"><table class="data-table">
             <thead><tr>
-                <th>Unit ID</th>
-                <th>Blood type</th>
-                <th>Quantity</th>
-                <th>Status</th>
-                <th>Hospital ID</th>
-                <th>Hospital</th>
-                <th>Location</th>
-                <th>Expiry</th>
+                <th>Unit ID</th><th>Blood type</th><th>Qty (ml)</th>
+                <th>Status</th><th>Hospital</th><th>Location</th><th>Expiry</th>
             </tr></thead><tbody>
     `;
 
@@ -169,7 +159,6 @@ async function loadBloodInventory() {
                 <td>${b.blood_type}</td>
                 <td>${b.quantity_ml}</td>
                 <td><span class="status-pill">${b.status}</span></td>
-                <td>${b.hospital_id}</td>
                 <td>${b.hospital_name}</td>
                 <td>${b.location}</td>
                 <td>${b.expiry_date}</td>
@@ -184,42 +173,39 @@ async function loadBloodInventory() {
 async function loadMyRequests() {
     if (!recipientProfile) return;
 
-    const res = await fetch(`${API_URL}/blood-requests`);
+    const res    = await fetch(`${API_URL}/blood-requests`);
     const result = await res.json();
 
     const myRequests = result.data.filter(r => r.recipient_id === recipientProfile.recipient_id);
 
     if (myRequests.length === 0) {
-        document.getElementById("requestsTable").innerHTML = "<p>No blood requests found.</p>";
+        document.getElementById("requestsTable").innerHTML = "<p class=\"muted\">No blood requests found.</p>";
         return;
     }
 
     let html = `
-        <div class="table-scroll">
-        <table class="data-table">
+        <div class="table-scroll"><table class="data-table">
             <thead><tr>
-                <th>Request ID</th>
-                <th>Hospital</th>
-                <th>Blood Type</th>
-                <th>Quantity (ml)</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th>ID</th><th>Hospital</th><th>Type</th>
+                <th>Qty (ml)</th><th>Priority</th><th>Status</th><th>Action</th>
             </tr></thead><tbody>
     `;
 
     myRequests.forEach(r => {
-        const cancelBtn = r.status === 'Pending'
-            ? `<button class="btn btn-sm btn-secondary" onclick="cancelBloodRequest(${r.request_id})">Cancel</button>`
-            : `<button class="btn btn-sm" disabled>Cancel</button>`;
-
         html += `
             <tr>
                 <td>${r.request_id}</td>
                 <td>${r.hospital_name || r.hospital_id}</td>
                 <td>${r.blood_type}</td>
                 <td>${r.quantity_needed_ml}</td>
+                <td>${r.priority_level}</td>
                 <td><span class="status-pill">${r.status}</span></td>
-                <td>${cancelBtn}</td>
+                <td>
+                    ${r.status === "Pending" ? `
+                        <button type="button" class="btn btn-sm btn-danger"
+                            onclick="cancelBloodRequest(${r.request_id})">Cancel</button>
+                    ` : `<span class="muted">${r.status}</span>`}
+                </td>
             </tr>
         `;
     });
@@ -231,9 +217,7 @@ async function loadMyRequests() {
 async function cancelBloodRequest(requestId) {
     if (!confirm("Are you sure you want to cancel this request?")) return;
 
-    const res = await fetch(`${API_URL}/blood-requests/${requestId}/cancel`, {
-        method: "PUT"
-    });
+    const res    = await fetch(`${API_URL}/blood-requests/${requestId}/cancel`, { method: "PUT" });
     const result = await res.json();
 
     if (!result.success) {
@@ -245,37 +229,43 @@ async function cancelBloodRequest(requestId) {
     await loadMyRequests();
 }
 
-async function markNotificationRead(notificationId) {
-    await fetch(`${API_URL}/notifications/${notificationId}/read`, {
-        method: "PUT"
-    });
-    await loadNotifications();
-}
-
 async function loadNotifications() {
-    const notificationsBox = document.getElementById("notificationsBox");
-    if (!notificationsBox) return;
-    
-    const res = await fetch(`${API_URL}/notifications/${user.user_id}`);
+    const res    = await fetch(`${API_URL}/notifications/${user.user_id}`);
     const result = await res.json();
-    
-    if (!result.success || result.data.length === 0) {
-        notificationsBox.innerHTML = "<p>No new notifications.</p>";
-        return;
-    }
 
-    let html = `<ul class="notification-list">`;
+    let html = `
+        <div class="table-scroll"><table class="data-table">
+            <thead><tr>
+                <th>ID</th><th>Message</th><th>Type</th>
+                <th>Date</th><th>Read</th><th>Action</th>
+            </tr></thead><tbody>
+    `;
+
     result.data.forEach(n => {
         html += `
-            <li class="${n.is_read ? 'read' : 'unread'}">
-                <p>${n.message}</p>
-                <small>${new Date(n.notification_date).toLocaleString()}</small>
-                ${!n.is_read ? `<button class="btn btn-sm" onclick="markNotificationRead(${n.notification_id})">Mark Read</button>` : ''}
-            </li>
+            <tr>
+                <td>${n.notification_id}</td>
+                <td>${n.message}</td>
+                <td>${n.type}</td>
+                <td>${n.notification_date}</td>
+                <td>${n.is_read ? "Yes" : "No"}</td>
+                <td>
+                    ${!n.is_read ? `
+                        <button type="button" class="btn btn-sm btn-secondary"
+                            onclick="markNotificationRead(${n.notification_id})">Mark read</button>
+                    ` : ""}
+                </td>
+            </tr>
         `;
     });
-    html += `</ul>`;
-    notificationsBox.innerHTML = html;
+
+    html += `</tbody></table></div>`;
+    document.getElementById("notificationsBox").innerHTML = html;
+}
+
+async function markNotificationRead(notificationId) {
+    await fetch(`${API_URL}/notifications/${notificationId}/read`, { method: "PUT" });
+    await loadNotifications();
 }
 
 async function init() {
@@ -283,7 +273,8 @@ async function init() {
     await loadBloodInventory();
     await loadMyRequests();
     await loadNotifications();
-    const today = new Date().toISOString().split('T')[0];
+
+    const today = new Date().toISOString().split("T")[0];
     document.getElementById("filterDate").min = today;
 }
 

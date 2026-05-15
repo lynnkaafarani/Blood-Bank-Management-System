@@ -45,26 +45,28 @@
             <button type="submit" class="btn btn-primary">Save changes</button>
         </form>
     </section>
-<section class="card span-2">
-    <h2>Available blood</h2>
-    <div class="form-row">
-        <input type="text" id="filterBloodType" placeholder="Blood type (e.g. O+)">
-        <input type="text" id="filterLocation" placeholder="Location (City/Area)">
-        <input type="text" id="filterHospital" placeholder="Hospital name or ID">
-        <input type="date" id="filterDate" min="">
-        <select id="filterStatus">
-            <option value="">All statuses</option>
-            <option value="Available">Available</option>
-            <option value="Reserved">Reserved</option>
-            <option value="Used">Used</option>
-            <option value="Expired">Expired</option>
-        </select>
-        <button type="button" class="btn btn-secondary" onclick="loadBloodInventory()">Search</button>
-    </div>
-    <p class="inline-note">Search by hospital name OR ID (e.g., "City Hospital" or "123")</p>
-    <p class="inline-note">Expiry filter hides units expiring before the selected date.</p>
-    <div id="inventoryTable">Loading inventory…</div>
-</section>
+
+    <section class="card span-2">
+        <h2>Available blood</h2>
+        <div class="toolbar">
+            <input type="text" id="filterBloodType" placeholder="Blood type (e.g. O+)">
+            <input type="text" id="filterLocation" placeholder="Location (City/Area)">
+            <input type="text" id="filterHospital" placeholder="Hospital name or ID">
+            <input type="date" id="filterDate" min="">
+            <select id="filterStatus">
+                <option value="">All statuses</option>
+                <option value="Available">Available</option>
+                <option value="Reserved">Reserved</option>
+                <option value="Used">Used</option>
+                <option value="Expired">Expired</option>
+            </select>
+            <button type="button" class="btn btn-secondary" onclick="loadBloodInventory()">Search</button>
+        </div>
+        <p class="inline-note">Search by hospital name OR ID. Expiry filter hides units expiring before the selected date.</p>
+        <div id="inventoryTable">Loading inventory…</div>
+    </section>
+
+    <section class="card">
         <h2>Submit blood request</h2>
         <form id="requestForm" class="form-row">
             <input type="number" id="requestHospitalId" placeholder="Hospital ID" required>
@@ -93,6 +95,6 @@
     </div>
 </main>
 
-<script src="recipient.js?v=2"></script>
+<script src="recipient.js"></script>
 </body>
 </html>
