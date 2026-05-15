@@ -54,7 +54,11 @@ async function loadHospitals() {
 
     const res = await fetch(`${API_URL}/hospitals`);
     const result = await res.json();
+const dropdown = document.getElementById("appointmentHospitalId");
 
+dropdown.innerHTML = `
+    <option value="">Select hospital</option>
+`;
     let html = `
         <div class="table-scroll">
         <table class="data-table">
@@ -67,6 +71,11 @@ async function loadHospitals() {
     `;
 
     result.data.forEach(h => {
+    dropdown.innerHTML += `
+    <option value="${h.hospital_id}">
+        ${h.hospital_name} - ${h.location}
+    </option>
+`;
         const text = `${h.hospital_name} ${h.location}`.toLowerCase();
         if (search && !text.includes(search)) return;
 
@@ -116,9 +125,9 @@ document.getElementById("appointmentForm").addEventListener("submit", async func
         return;
     }
 
-    alert("Appointment scheduled successfully.");
+    alert(result.message || "Appointment scheduled successfully.");
     this.reset();
-
+    await loadDonorProfile();
     await loadAppointments();
     await loadNotifications();
 });

@@ -578,55 +578,106 @@ def get_appointments():
 
 @app.route("/api/appointments/<int:appointment_id>/cancel", methods=["PUT"])
 def cancel_appointment(appointment_id):
-
-    updated = query_db("""
+    query_db("""
         UPDATE Appointment
         SET status = 'Cancelled'
         WHERE appointment_id = %s AND status = 'Scheduled'
     """, (appointment_id,), fetch=False)
 
-    if updated == 0:
-        return jsonify({
-            "success": False,
-            "message": "Appointment not found or already cancelled"
-        }), 400
-
     return jsonify({
         "success": True,
         "message": "Appointment cancelled"
     })
+
+
 @app.route("/api/appointments", methods=["POST"])
 def create_appointment():
     data = request.json or {}
+
+    donor_id = data.get("donor_id")
+    hospital_id = data.get("hospital_id")
+    appointment_datetime = data.get("appointment_datetime")
+
     donor = query_db("""
-                     SELECT d.*, u.age, u.is_active
-                     FROM Donor d
-                              JOIN UserAccount u ON d.user_id = u.user_id
-                     WHERE d.donor_id = %s
-                     """, (data.get("donor_id"),))
+        SELECT d.*, u.user_id, u.age
+        FROM Donor d
+        JOIN UserAccount u ON d.user_id = u.user_id
+        WHERE d.donor_id = %s
+    """, (donor_id,))
 
     if not donor:
-        return jsonify({"success": False, "message": "Donor not found"}), 404
+        return jsonify({
+            "success": False,
+            "message": "Donor not found. The frontend may be sending user_id instead of donor_id."
+        }), 404
 
-    eligible, reason = check_donor_eligibility(donor[0])
+    donor = donor[0]
 
-    if not eligible:
-        return jsonify({"success": False, "message": reason}), 403
+    if donor["eligibility_status"] != "Eligible":
+        return jsonify({
+            "success": False,
+            "message": "Donor is not eligible to schedule a donation appointment."
+        }), 403
+
+    if donor["health_status"] != "Healthy":
+        return jsonify({
+            "success": False,
+            "message": "Donor health status is not suitable for donation."
+        }), 403
+
+    if donor["medication_restricted"]:
+        return jsonify({
+            "success": False,
+            "message": "Donor is temporarily deferred due to medication restriction."
+        }), 403
+
+    if donor["weight_kg"] is not None and float(donor["weight_kg"]) < 45:
+        return jsonify({
+            "success": False,
+            "message": "Donor weight must be at least 45 kg."
+        }), 403
+
+    if donor["last_donation_date"]:
+        from datetime import date, datetime
+
+        last_date = donor["last_donation_date"]
+
+        if isinstance(last_date, str):
+            last_date = datetime.strptime(last_date, "%Y-%m-%d").date()
+
+        days_since = (date.today() - last_date).days
+
+        if days_since < 56:
+            return jsonify({
+                "success": False,
+                "message": f"Donor must wait 56 days between donations. Only {days_since} days passed."
+            }), 403
 
     appointment_id = query_db("""
         INSERT INTO Appointment
         (donor_id, hospital_id, appointment_datetime, status, eligibility_snapshot, notes)
-        VALUES (%s, %s, %s, 'Scheduled', %s, %s)
+        VALUES (%s, %s, %s, 'Scheduled', 'Eligible', %s)
     """, (
-        data.get("donor_id"),
-        data.get("hospital_id"),
-        data.get("appointment_datetime"),
-        data.get("eligibility_snapshot", "Eligible"),
+        donor_id,
+        hospital_id,
+        appointment_datetime,
         data.get("notes", "")
     ), fetch=False)
 
-    return jsonify({"success": True, "appointment_id": appointment_id})
+    query_db("""
+        INSERT INTO Notification
+        (user_id, message, type, is_read)
+        VALUES (%s, %s, 'Appointment', FALSE)
+    """, (
+        donor["user_id"],
+        "Donation appointment confirmed successfully."
+    ), fetch=False)
 
+    return jsonify({
+        "success": True,
+        "appointment_id": appointment_id,
+        "message": "Donation appointment scheduled successfully."
+    }), 201
 
 # =====================================================
 # RECIPIENTS

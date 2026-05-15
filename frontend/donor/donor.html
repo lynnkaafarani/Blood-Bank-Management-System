@@ -63,7 +63,9 @@
     <section class="card">
         <h2>Schedule donation</h2>
         <form id="appointmentForm" class="form-row">
-            <input type="number" id="appointmentHospitalId" placeholder="Hospital ID" required>
+            <select id="appointmentHospitalId" required>
+    <option value="">Select hospital</option>
+</select>
             <input type="datetime-local" id="appointmentDateTime" required min="">
             <input type="text" id="appointmentNotes" placeholder="Notes (optional)">
             <button type="submit" class="btn btn-primary">Schedule</button>
