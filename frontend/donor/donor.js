@@ -48,7 +48,7 @@ document.getElementById("updateHealthStatus").value = donorProfile.health_status
 document.getElementById("updateWeight").value = donorProfile.weight_kg || "";
 document.getElementById("updateMedication").value = donorProfile.medication_restricted ? "true" : "false";
 
-}
+
 
 async function loadHospitals() {
     const search = document.getElementById("hospitalSearch").value.toLowerCase();
