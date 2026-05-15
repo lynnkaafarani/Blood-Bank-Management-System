@@ -43,7 +43,42 @@ if (loginForm) {
 }
 
 const signupForm = document.getElementById("signupForm");
+const signupRole = document.getElementById("signupRole");
 
+if (signupRole) {
+    signupRole.addEventListener("change", function () {
+        const donorFields = document.getElementById("donorFields");
+        const recipientFields = document.getElementById("recipientFields");
+        const signupWeight = document.getElementById("signupWeight");
+        const signupCondition = document.getElementById("signupCondition");
+
+        if (this.value === "Donor") {
+            donorFields.style.display = "block";
+            recipientFields.style.display = "none";
+
+            signupWeight.required = true;
+            signupCondition.required = false;
+            signupCondition.value = "";
+
+        } else if (this.value === "Recipient") {
+            donorFields.style.display = "none";
+            recipientFields.style.display = "block";
+
+            signupWeight.required = false;
+            signupWeight.value = "";
+            signupCondition.required = true;
+
+        } else {
+            donorFields.style.display = "none";
+            recipientFields.style.display = "none";
+
+            signupWeight.required = false;
+            signupCondition.required = false;
+            signupWeight.value = "";
+            signupCondition.value = "";
+        }
+    });
+}
 if (signupForm) {
     signupForm.addEventListener("submit", async function(e) {
         e.preventDefault();

@@ -54,8 +54,13 @@
                 </select>
 
                 <input type="text" id="signupBloodType" placeholder="Blood type (e.g. O+)" required>
-                <input type="number" id="signupWeight" placeholder="Weight (kg) — donors only" min="1">
-                <input type="text" id="signupCondition" placeholder="Medical condition — recipients only">
+                <div id="donorFields" style="display:none;">
+    <input type="number" id="signupWeight" placeholder="Weight (kg)" min="1">
+</div>
+
+<div id="recipientFields" style="display:none;">
+    <input type="text" id="signupCondition" placeholder="Medical condition">
+</div>
 
                 <p class="field-hint">Donors: include weight. Recipients: include condition when relevant.</p>
 
