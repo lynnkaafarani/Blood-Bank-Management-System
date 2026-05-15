@@ -836,7 +836,33 @@ def add_blood_unit():
             "success": False,
             "message": f"Invalid blood type. Accepted values: {', '.join(sorted(VALID_BLOOD_TYPES))}"
         }), 400
+    quantity_ml = data.get("quantity_ml")
+    donation_date = data.get("donation_date")
+    expiry_date = data.get("expiry_date")
 
+    if not quantity_ml or int(quantity_ml) <= 0:
+        return jsonify({
+            "success": False,
+            "message": "Quantity must be greater than 0."
+        }), 400
+
+    from datetime import datetime
+
+    try:
+        donation_dt = datetime.strptime(donation_date, "%Y-%m-%d")
+        expiry_dt = datetime.strptime(expiry_date, "%Y-%m-%d")
+
+        if expiry_dt <= donation_dt:
+            return jsonify({
+                "success": False,
+                "message": "Expiry date must be after donation date."
+            }), 400
+
+    except ValueError:
+        return jsonify({
+            "success": False,
+            "message": "Invalid date format."
+        }), 400
     blood_unit_id = query_db("""
         INSERT INTO BloodUnit
         (hospital_id, donor_id, blood_type, component_type, quantity_ml, donation_date, expiry_date, status)
@@ -1007,6 +1033,22 @@ def fulfill_request(request_id):
         for result in cursor.stored_results():
             result.fetchall()
         conn.commit()
+        request_info = query_db("""
+                                SELECT r.user_id
+                                FROM BloodRequest br
+                                         JOIN Recipient r ON br.recipient_id = r.recipient_id
+                                WHERE br.request_id = %s
+                                """, (request_id,))
+
+        if request_info:
+            query_db("""
+                     INSERT INTO Notification
+                         (user_id, message, type, is_read)
+                     VALUES (%s, %s, 'Blood Request', FALSE)
+                     """, (
+                         request_info[0]["user_id"],
+                         "Your blood request has been approved and fulfilled."
+                     ), fetch=False)
         return jsonify({"success": True, "message": "Blood request fulfilled"})
 
     except Error as e:
@@ -1032,6 +1074,22 @@ def reject_request(request_id):
             data.get("reason", "Request rejected by hospital staff")
         ])
         conn.commit()
+        request_info = query_db("""
+                                SELECT r.user_id
+                                FROM BloodRequest br
+                                         JOIN Recipient r ON br.recipient_id = r.recipient_id
+                                WHERE br.request_id = %s
+                                """, (request_id,))
+
+        if request_info:
+            query_db("""
+                     INSERT INTO Notification
+                         (user_id, message, type, is_read)
+                     VALUES (%s, %s, 'Blood Request', FALSE)
+                     """, (
+                         request_info[0]["user_id"],
+                         "Your blood request has been rejected."
+                     ), fetch=False)
         return jsonify({"success": True, "message": "Blood request rejected"})
 
     except Error as e:
@@ -1080,7 +1138,55 @@ def cancel_appointment(appointment_id):
         "message": "Appointment cancelled"
     })
 
+@app.route("/api/staff/urgent-shortage", methods=["POST"])
+def notify_urgent_shortage():
 
+    data = request.json or {}
+    staff = query_db("""
+                     SELECT staff_id
+                     FROM HospitalStaff
+                     WHERE staff_id = %s
+                     """, (data.get("staff_id"),))
+
+    if not staff:
+        return jsonify({
+            "success": False,
+            "message": "Unauthorized staff access."
+        }), 403
+
+    blood_type = clean_blood_type(data.get("blood_type"))
+
+    if blood_type is None:
+        return jsonify({
+            "success": False,
+            "message": "Invalid blood type"
+        }), 400
+
+    donors = query_db("""
+        SELECT d.donor_id, u.user_id
+        FROM Donor d
+        JOIN UserAccount u
+            ON d.user_id = u.user_id
+        WHERE d.blood_type = %s
+          AND d.eligibility_status = 'Eligible'
+          AND u.account_status = 'Active'
+    """, (blood_type,))
+
+    for donor in donors:
+
+        query_db("""
+            INSERT INTO Notification
+            (user_id, message, type, is_read)
+            VALUES (%s, %s, 'Urgent Shortage', FALSE)
+        """, (
+            donor["user_id"],
+            f"Urgent blood shortage alert for blood type {blood_type}. Please consider donating."
+        ), fetch=False)
+
+    return jsonify({
+        "success": True,
+        "message": f"Urgent shortage notifications sent to {len(donors)} donors."
+    })
 # =====================================================
 # NOTIFICATIONS
 # =====================================================
@@ -1187,8 +1293,23 @@ def staff_requests(user_id):
 
 
 @app.route("/api/staff/register-donation", methods=["POST"])
+
+@app.route("/api/staff/register-donation", methods=["POST"])
 def staff_register_donation():
+
     data = request.json or {}
+
+    staff = query_db("""
+        SELECT staff_id
+        FROM HospitalStaff
+        WHERE staff_id = %s
+    """, (data.get("staff_id"),))
+
+    if not staff:
+        return jsonify({
+            "success": False,
+            "message": "Unauthorized staff access."
+        }), 403
 
     blood_type = clean_blood_type(data.get("blood_type"))
     if blood_type is None:

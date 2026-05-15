@@ -33,8 +33,28 @@
     <section class="card">
         <h2>Inventory filter</h2>
         <div class="toolbar">
-            <input type="text" id="filterType" placeholder="Blood type (A+, O−…)">
-            <button type="button" class="btn btn-secondary" onclick="loadInventory()">Apply filter</button>
+           <select id="filterType">
+    <option value="">All blood types</option>
+    <option value="A+">A+</option>
+    <option value="A-">A-</option>
+    <option value="B+">B+</option>
+    <option value="B-">B-</option>
+    <option value="AB+">AB+</option>
+    <option value="AB-">AB-</option>
+    <option value="O+">O+</option>
+    <option value="O-">O-</option>
+</select>
+
+<select id="filterStatus">
+    <option value="">All statuses</option>
+    <option value="Available">Available</option>
+    <option value="Used">Used</option>
+    <option value="Expired">Expired</option>
+</select>
+
+<input type="date" id="filterExpiry">
+
+<button type="button" class="btn btn-secondary" onclick="loadInventory()">Apply filter</button>
         </div>
         <p class="inline-note">Leave blank to list all units for your hospital.</p>
     </section>
@@ -48,8 +68,18 @@
         <h2>Add blood unit</h2>
         <form id="bloodForm" class="form-row" autocomplete="off">
             <input type="number" id="donor_id" placeholder="Donor ID (optional)">
-            <input type="text" id="blood_type" placeholder="Blood type" required>
-            <input type="number" id="quantity_ml" placeholder="Quantity (ml)" required>
+            <select id="blood_type" required>
+    <option value="">Select blood type</option>
+    <option value="A+">A+</option>
+    <option value="A-">A-</option>
+    <option value="B+">B+</option>
+    <option value="B-">B-</option>
+    <option value="AB+">AB+</option>
+    <option value="AB-">AB-</option>
+    <option value="O+">O+</option>
+    <option value="O-">O-</option>
+</select>
+           <input type="number" id="quantity_ml" placeholder="Quantity (ml)" required min="1">
             <input type="date" id="donation_date" required>
             <input type="date" id="expiry_date" required>
             <button type="submit" class="btn btn-primary">Add unit</button>
@@ -60,12 +90,44 @@
         <h2>Register donation</h2>
         <form id="donationForm" class="form-row">
             <input type="number" id="donor_id_donation" placeholder="Donor ID" required>
-            <input type="text" id="blood_type_donation" placeholder="Blood type" required>
-            <input type="number" id="quantity_donation" placeholder="Quantity (ml)" required>
+            <select id="blood_type_donation" required>
+    <option value="">Select blood type</option>
+    <option value="A+">A+</option>
+    <option value="A-">A-</option>
+    <option value="B+">B+</option>
+    <option value="B-">B-</option>
+    <option value="AB+">AB+</option>
+    <option value="AB-">AB-</option>
+    <option value="O+">O+</option>
+    <option value="O-">O-</option>
+
+</select>
+
+            <input type="number" id="quantity_donation" placeholder="Quantity (ml)" required min="1">
             <button type="submit" class="btn btn-primary">Register</button>
         </form>
     </section>
+<section class="card">
+    <h2>Urgent blood shortage</h2>
 
+    <form id="urgentForm" class="form-row">
+        <select id="urgentBloodType" required>
+            <option value="">Select blood type</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+        </select>
+
+        <button type="submit" class="btn btn-danger">
+            Send urgent alert
+        </button>
+    </form>
+</section>
     <section class="card span-2">
         <h2>Blood requests</h2>
         <div id="requestsTable">Loading…</div>
@@ -99,7 +161,9 @@ async function loadStaffProfile() {
 }
 
 async function loadInventory() {
-    const filter = document.getElementById("filterType").value.toLowerCase();
+    const filterType = document.getElementById("filterType").value;
+const filterStatus = document.getElementById("filterStatus").value;
+const filterExpiry = document.getElementById("filterExpiry").value;
     const res = await fetch(`${API_URL}/staff/${user.user_id}/inventory`);
     const result = await res.json();
 
@@ -110,7 +174,9 @@ async function loadInventory() {
         </tr></thead><tbody>`;
 
     result.data.forEach(b => {
-        if (filter && !b.blood_type.toLowerCase().includes(filter)) return;
+        if (filterType && b.blood_type !== filterType) return;
+if (filterStatus && b.status !== filterStatus) return;
+if (filterExpiry && b.expiry_date !== filterExpiry) return;
         html += `
         <tr>
             <td>${b.blood_unit_id}</td>
@@ -131,6 +197,10 @@ async function loadInventory() {
 
 async function editUnit(id) {
     const qty = prompt("New quantity:");
+    if (!qty || Number(qty) <= 0) {
+    alert("Quantity must be greater than 0.");
+    return;
+}
     const status = prompt("Status (Available/Used/Expired):");
 
     await fetch(`${API_URL}/blood-units/${id}`, {
@@ -138,7 +208,8 @@ async function editUnit(id) {
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
             quantity_ml: qty,
-            expiry_date: new Date().toISOString().split('T')[0],
+            const expiry = prompt("New expiry date (YYYY-MM-DD):");
+            expiry_date: expiry,
             status: status
         })
     });
@@ -226,14 +297,42 @@ async function rejectReq(id) {
         })
     });
 
-    loadRequests();
+   await loadRequests();
+await loadInventory();
 }
 
 async function init() {
     await loadStaffProfile();
     await loadInventory();
     await loadRequests();
+document.getElementById("urgentForm")
+.addEventListener("submit", async e => {
 
+    e.preventDefault();
+
+    const response = await fetch(
+        `${API_URL}/staff/urgent-shortage`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+           body: JSON.stringify({
+    staff_id: staffProfile.staff_id,
+    blood_type:
+        document.getElementById(
+            "urgentBloodType"
+        ).value
+})
+        }
+    );
+
+    const result = await response.json();
+
+    alert(result.message || "Urgent alerts sent");
+
+    e.target.reset();
+});
     document.getElementById("bloodForm").addEventListener("submit", async e => {
         e.preventDefault();
 
@@ -264,17 +363,30 @@ async function init() {
     document.getElementById("donationForm").addEventListener("submit", async e => {
         e.preventDefault();
 
-        await fetch(`${API_URL}/staff/register-donation`, {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                donor_id: document.getElementById("donor_id_donation").value,
-                staff_id: staffProfile.staff_id,
-                hospital_id: staffProfile.hospital_id,
-                blood_type: document.getElementById("blood_type_donation").value,
-                quantity_ml: document.getElementById("quantity_donation").value
-            })
-        });
+       const response = await fetch(`${API_URL}/staff/register-donation`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+        donor_id: document.getElementById("donor_id_donation").value,
+        staff_id: staffProfile.staff_id,
+        hospital_id: staffProfile.hospital_id,
+        blood_type: document.getElementById("blood_type_donation").value,
+        quantity_ml: document.getElementById("quantity_donation").value
+    })
+});
+
+const result = await response.json();
+
+if (!result.success) {
+    alert("Error: " + (result.error || result.message));
+    return;
+}
+
+alert("Donation registered!");
+
+e.target.reset();
+
+await loadInventory();
 
         alert("Donation registered!");
         e.target.reset();
