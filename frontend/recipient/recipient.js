@@ -70,6 +70,7 @@ document.getElementById("profileForm").addEventListener("submit", async function
 async function loadBloodInventory() {
     const bloodType = document.getElementById("filterBloodType").value.toLowerCase();
     const location = document.getElementById("filterLocation").value.toLowerCase();
+    const hospitalSearch = document.getElementById("filterHospital").value.toLowerCase();
     const date = document.getElementById("filterDate").value;
     const status = document.getElementById("filterStatus").value;
 
@@ -80,6 +81,7 @@ async function loadBloodInventory() {
     const filteredData = result.data.filter(b => {
         if (bloodType && !b.blood_type.toLowerCase().includes(bloodType)) return false;
         if (location && !b.location.toLowerCase().includes(location)) return false;
+        if (hospitalSearch && !b.hospital_name.toLowerCase().includes(hospitalSearch) && !b.hospital_id.toString().includes(hospitalSearch)) return false;
         if (status && b.status !== status) return false;
         if (date && b.expiry_date < date) return false;
         return true;
@@ -129,53 +131,6 @@ async function loadBloodInventory() {
 
     html += `</tbody></table></div>`;
     document.getElementById("inventoryTable").innerHTML = html;
-}
-
-async function cancelRequest(requestId) {
-    if (!confirm("Cancel this blood request?")) return;
-
-    await fetch(`${API_URL}/blood-requests/${requestId}/cancel`, {
-        method: "PUT"
-    });
-
-    await loadMyRequests();
-    await loadNotifications();
-}
-
-async function loadNotifications() {
-    const res = await fetch(`${API_URL}/notifications/${user.user_id}`);
-    const result = await res.json();
-
-    let html = `
-        <div class="table-scroll">
-        <table class="data-table">
-            <thead><tr>
-                <th>ID</th>
-                <th>Message</th>
-                <th>Type</th>
-                <th>Date</th>
-                <th>Read</th>
-                <th>Action</th>
-            </tr></thead><tbody>
-    `;
-
-    result.data.forEach(n => {
-        html += `
-            <tr>
-                <td>${n.notification_id}</td>
-                <td>${n.message}</td>
-                <td>${n.type}</td>
-                <td>${n.notification_date}</td>
-                <td>${n.is_read ? "Yes" : "No"}</td>
-                <td>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="markNotificationRead(${n.notification_id})">Mark read</button>
-                </td>
-            </tr>
-        `;
-    });
-
-    html += `</tbody></table></div>`;
-    document.getElementById("notificationsBox").innerHTML = html;
 }
 
 async function markNotificationRead(notificationId) {
