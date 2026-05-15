@@ -1025,38 +1025,70 @@ def notify_urgent_shortage():
     data = request.json or {}
 
     staff = query_db("""
-        SELECT staff_id FROM HospitalStaff WHERE staff_id = %s
+        SELECT staff_id
+        FROM HospitalStaff
+        WHERE staff_id = %s
     """, (data.get("staff_id"),))
 
     if not staff:
-        return jsonify({"success": False, "message": "Unauthorized staff access."}), 403
+        return jsonify({
+            "success": False,
+            "message": "Unauthorized staff access."
+        }), 403
 
     blood_type = clean_blood_type(data.get("blood_type"))
+
     if blood_type is None:
-        return jsonify({"success": False, "message": "Invalid blood type"}), 400
+        return jsonify({
+            "success": False,
+            "message": "Invalid blood type"
+        }), 400
 
     donors = query_db("""
-        SELECT d.donor_id, u.user_id
+        SELECT
+            d.donor_id,
+            d.user_id,
+            u.first_name,
+            u.account_status,
+            d.eligibility_status
         FROM Donor d
-        JOIN UserAccount u ON d.user_id = u.user_id
+        JOIN UserAccount u
+            ON d.user_id = u.user_id
         WHERE d.blood_type = %s
           AND d.eligibility_status = 'Eligible'
           AND u.account_status = 'Active'
     """, (blood_type,))
 
+    if not donors:
+        return jsonify({
+            "success": False,
+            "message": f"No eligible donors found for {blood_type}"
+        })
+
+    inserted_count = 0
+
     for donor in donors:
-        print(f"Sending to user_id: {donor['user_id']}", flush=True)
-        query_db("""
-                 INSERT INTO Notification (user_id, message, type, is_read)
-                 VALUES (%s, %s, 'Urgent Shortage', FALSE)
-                 """, (
-                     donor["user_id"],
-                     f"Urgent blood shortage alert for blood type {blood_type}. Please consider donating."
-                 ), fetch=False)
+        print("DONOR:", donor, flush=True)
+
+        result = query_db("""
+            INSERT INTO Notification
+            (user_id, message, type, is_read)
+            VALUES (%s, %s, %s, FALSE)
+        """, (
+            donor["user_id"],
+            f"Urgent blood shortage alert for blood type {blood_type}. Please consider donating.",
+            "Urgent Shortage"
+        ), fetch=False)
+
+        print("INSERT RESULT:", result, flush=True)
+
+        if result is not None:
+            inserted_count += 1
 
     return jsonify({
         "success": True,
-        "message": f"Urgent shortage notifications sent to {len(donors)} donors."
+        "message": f"{inserted_count} notifications inserted",
+        "donors_found": len(donors)
     })
 
 
