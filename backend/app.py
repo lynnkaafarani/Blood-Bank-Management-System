@@ -576,18 +576,7 @@ def get_appointments():
         "data": query_db("SELECT * FROM vw_appointments ORDER BY appointment_datetime DESC")
     })
 
-@app.route("/api/appointments/<int:appointment_id>/cancel", methods=["PUT"])
-def cancel_appointment(appointment_id):
-    query_db("""
-        UPDATE Appointment
-        SET status = 'Cancelled'
-        WHERE appointment_id = %s AND status = 'Scheduled'
-    """, (appointment_id,), fetch=False)
 
-    return jsonify({
-        "success": True,
-        "message": "Appointment cancelled"
-    })
 
 
 @app.route("/api/appointments", methods=["POST"])
