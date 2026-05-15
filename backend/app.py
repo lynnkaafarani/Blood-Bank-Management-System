@@ -411,12 +411,6 @@ def add_hospital():
 # DONORS
 # =====================================================
 
-@app.route("/api/donors")
-def get_donors():
-    return jsonify({
-        "success": True,
-        "data": query_db("SELECT * FROM vw_donor_profiles ORDER BY donor_id")
-    })
 
 
 @app.route("/api/donors/<int:donor_id>/history")
