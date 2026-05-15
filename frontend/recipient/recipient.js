@@ -12,6 +12,26 @@ function logout() {
     localStorage.removeItem("bbms_user");
     window.location.href = "../index.html";
 }
+async function loadHospitalsDropdown() {
+
+    const res = await fetch(`${API_URL}/hospitals`);
+    const result = await res.json();
+
+    const dropdown =
+        document.getElementById("requestHospitalId");
+
+    dropdown.innerHTML =
+        `<option value="">Select hospital</option>`;
+
+    result.data.forEach(h => {
+
+        dropdown.innerHTML += `
+            <option value="${h.hospital_id}">
+                ${h.hospital_name} - ${h.location}
+            </option>
+        `;
+    });
+}
 
 async function loadRecipientProfile() {
     const res = await fetch(`${API_URL}/recipients`);
@@ -273,7 +293,7 @@ async function init() {
     await loadBloodInventory();
     await loadMyRequests();
     await loadNotifications();
-
+await loadHospitalsDropdown();
     const today = new Date().toISOString().split("T")[0];
     document.getElementById("filterDate").min = today;
 }

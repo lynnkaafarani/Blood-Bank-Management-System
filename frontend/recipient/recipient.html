@@ -69,7 +69,9 @@
     <section class="card">
         <h2>Submit blood request</h2>
         <form id="requestForm" class="form-row">
-            <input type="number" id="requestHospitalId" placeholder="Hospital ID" required>
+        <select id="requestHospitalId" required>
+    <option value="">Select hospital</option>
+</select>
             <input type="text" id="requestBloodType" placeholder="Blood type" required>
             <input type="number" id="requestQuantity" placeholder="Quantity (ml)" required>
             <select id="requestPriority">
