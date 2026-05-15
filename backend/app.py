@@ -1099,7 +1099,22 @@ def get_donors():
     return jsonify({
         "success": True,
         "data": query_db("""
-            SELECT d.donor_id, u.first_name, u.last_name, d.blood_type
+            SELECT
+                d.donor_id,
+                d.user_id,
+                u.first_name,
+                u.last_name,
+                CONCAT(u.first_name, ' ', u.last_name) AS full_name,
+                u.email,
+                u.phone,
+                u.age,
+                u.gender,
+                d.blood_type,
+                d.health_status,
+                d.weight_kg,
+                d.medication_restricted,
+                d.last_donation_date,
+                d.eligibility_status
             FROM Donor d
             JOIN UserAccount u ON d.user_id = u.user_id
             ORDER BY u.first_name, u.last_name
