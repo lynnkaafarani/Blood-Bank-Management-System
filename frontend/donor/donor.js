@@ -201,6 +201,7 @@ async function cancelAppointment(appointmentId) {
     alert(result.message || "Appointment cancelled");
 
     await loadAppointments();
+    await loadNotifications();
 }
 async function loadDonationHistory() {
     if (!donorProfile) return;

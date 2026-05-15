@@ -1053,15 +1053,43 @@ def reject_request(request_id):
             conn.close()
 
 
-@app.route("/api/blood-requests/<int:request_id>/cancel", methods=["PUT"])
-def cancel_request(request_id):
-    query_db("""
-        UPDATE BloodRequest
-        SET status = 'Cancelled'
-        WHERE request_id = %s AND status = 'Pending'
-    """, (request_id,), fetch=False)
+@app.route("/api/appointments/<int:appointment_id>/cancel", methods=["PUT"])
+def cancel_appointment(appointment_id):
 
-    return jsonify({"success": True, "message": "Request cancelled"})
+    appointment = query_db("""
+        SELECT a.appointment_id, a.donor_id, d.user_id
+        FROM Appointment a
+        JOIN Donor d ON a.donor_id = d.donor_id
+        WHERE a.appointment_id = %s
+    """, (appointment_id,))
+
+    if not appointment:
+        return jsonify({
+            "success": False,
+            "message": "Appointment not found"
+        }), 404
+
+    appointment = appointment[0]
+
+    query_db("""
+        UPDATE Appointment
+        SET status = 'Cancelled'
+        WHERE appointment_id = %s AND status = 'Scheduled'
+    """, (appointment_id,), fetch=False)
+
+    query_db("""
+        INSERT INTO Notification
+        (user_id, message, type, is_read)
+        VALUES (%s, %s, 'Appointment', FALSE)
+    """, (
+        appointment["user_id"],
+        "Your donation appointment has been cancelled."
+    ), fetch=False)
+
+    return jsonify({
+        "success": True,
+        "message": "Appointment cancelled"
+    })
 
 
 # =====================================================
