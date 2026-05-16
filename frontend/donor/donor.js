@@ -44,7 +44,7 @@ async function loadDonorProfile() {
     document.getElementById("updatePhone").value = donorProfile.phone || "";
     document.getElementById("updateHealthStatus").value = donorProfile.health_status || "Healthy";
     document.getElementById("updateWeight").value = donorProfile.weight_kg || "";
-    document.getElementById("updateMedication").value = donorProfile.medication_restricted ? "true" : "false";
+    document.getElementById("updateMedication").value = donorProfile.medication_restricted ? "1" : "0";
 }
 
 async function loadHospitals() {
@@ -278,7 +278,7 @@ document.getElementById("profileForm").addEventListener("submit", async function
             phone: document.getElementById("updatePhone").value,
             health_status: document.getElementById("updateHealthStatus").value,
             weight_kg: document.getElementById("updateWeight").value,
-            medication_restricted: document.getElementById("updateMedication").value === "true"
+            medication_restricted: document.getElementById("updateMedication").value === "1"
         })
     });
 
