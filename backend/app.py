@@ -1024,6 +1024,7 @@ def cancel_appointment(appointment_id):
 def notify_urgent_shortage():
     data = request.json or {}
 
+    # 1. Validate staff
     staff = query_db("""
         SELECT staff_id
         FROM HospitalStaff
@@ -1036,6 +1037,7 @@ def notify_urgent_shortage():
             "message": "Unauthorized staff access."
         }), 403
 
+    # 2. Validate blood type
     blood_type = clean_blood_type(data.get("blood_type"))
 
     if blood_type is None:
@@ -1044,6 +1046,7 @@ def notify_urgent_shortage():
             "message": "Invalid blood type"
         }), 400
 
+    # 3. Get eligible donors
     donors = query_db("""
         SELECT
             d.donor_id,
@@ -1052,8 +1055,7 @@ def notify_urgent_shortage():
             u.account_status,
             d.eligibility_status
         FROM Donor d
-        JOIN UserAccount u
-            ON d.user_id = u.user_id
+        JOIN UserAccount u ON d.user_id = u.user_id
         WHERE d.blood_type = %s
           AND d.eligibility_status = 'Eligible'
           AND u.account_status = 'Active'
@@ -1065,26 +1067,32 @@ def notify_urgent_shortage():
             "message": f"No eligible donors found for {blood_type}"
         })
 
+    # 4. Insert notifications
     inserted_count = 0
 
     for donor in donors:
-        print("DONOR:", donor, flush=True)
+        try:
+            print("DONOR:", donor, flush=True)
 
-        result = query_db("""
-            INSERT INTO Notification
-            (user_id, message, type, is_read)
-            VALUES (%s, %s, %s, FALSE)
-        """, (
-            donor["user_id"],
-            f"Urgent blood shortage alert for blood type {blood_type}. Please consider donating.",
-            "Urgent Shortage"
-        ), fetch=False)
+            row_id = query_db("""
+                INSERT INTO Notification
+                (user_id, message, type, is_read)
+                VALUES (%s, %s, %s, FALSE)
+            """, (
+                donor["user_id"],
+                f"Urgent blood shortage alert for blood type {blood_type}. Please consider donating.",
+                "Shortage"
+            ), fetch=False)
 
-        print("INSERT RESULT:", result, flush=True)
+            print("INSERT RESULT:", row_id, flush=True)
 
-        if result is not None:
-            inserted_count += 1
+            if row_id:
+                inserted_count += 1
 
+        except Exception as e:
+            print("INSERT ERROR:", str(e), flush=True)
+
+    # 5. Response
     return jsonify({
         "success": True,
         "message": f"{inserted_count} notifications inserted",
