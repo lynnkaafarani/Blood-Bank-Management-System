@@ -540,6 +540,35 @@ def update_donor_profile(donor_id):
         donor_id
     ), fetch=False)
 
+    # Recalculate eligibility
+    donor = query_db("""
+                     SELECT d.*, u.age
+                     FROM Donor d
+                              JOIN UserAccount u ON d.user_id = u.user_id
+                     WHERE d.donor_id = %s
+                     """, (donor_id,))[0]
+
+    eligible = True
+
+    if donor["medication_restricted"]:
+        eligible = False
+
+    if donor["health_status"] != "Healthy":
+        eligible = False
+
+    if donor["weight_kg"] and float(donor["weight_kg"]) < 45:
+        eligible = False
+
+    # Update eligibility status
+    query_db("""
+             UPDATE Donor
+             SET eligibility_status = %s
+             WHERE donor_id = %s
+             """, (
+                 "Eligible" if eligible else "Ineligible",
+                 donor_id
+             ), fetch=False)
+
     return jsonify({"success": True, "message": "Donor profile updated"})
 
 @app.route("/api/debug-urgent/<path:blood_type>")
