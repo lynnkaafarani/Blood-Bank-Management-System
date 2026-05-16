@@ -501,9 +501,6 @@ def register_donor():
 def update_donor_profile(donor_id):
     data = request.json or {}
 
-    # -------------------------
-    # GET DONOR USER LINK
-    # -------------------------
     donor = query_db(
         "SELECT user_id FROM Donor WHERE donor_id = %s",
         (donor_id,)
@@ -515,23 +512,17 @@ def update_donor_profile(donor_id):
     user_id = donor[0]["user_id"]
 
     # -------------------------
-    # PHONE VALIDATION
+    # PHONE
     # -------------------------
     phone = clean_phone(data.get("phone"))
     if data.get("phone") and phone is None:
-        return jsonify({
-            "success": False,
-            "message": "Invalid Lebanese phone number"
-        }), 400
+        return jsonify({"success": False, "message": "Invalid phone"}), 400
 
     if phone and phone_exists(phone, "Donor", exclude_user_id=user_id):
-        return jsonify({
-            "success": False,
-            "message": "Phone already used"
-        }), 409
+        return jsonify({"success": False, "message": "Phone already used"}), 409
 
     # -------------------------
-    # UPDATE USER TABLE
+    # USER UPDATE
     # -------------------------
     query_db("""
         UPDATE UserAccount
@@ -546,24 +537,21 @@ def update_donor_profile(donor_id):
         user_id
     ), fetch=False)
 
-    # -------------------------
-    # NORMALIZE MEDICATION INPUT (IMPORTANT)
-    # -------------------------
-    med = data.get("medication_restricted", 0)
+    # =====================================================
+    # 🔥 FIX: FORCE INTEGER (THIS IS THE IMPORTANT PART)
+    # =====================================================
+    med_raw = data.get("medication_restricted", 0)
 
-    # handle string / int / bool safely
-    if isinstance(med, str):
-        med = med.strip()
-        med = med.lower() in ["1", "true", "yes", "medication restricted"]
+    try:
+        med = int(med_raw)
+    except:
+        med = 0
 
-    elif isinstance(med, (int, float)):
-        med = bool(med)
-
-    else:
-        med = bool(med)
+    # safety clamp (only 0 or 1)
+    med = 1 if med == 1 else 0
 
     # -------------------------
-    # UPDATE DONOR TABLE
+    # DONOR UPDATE
     # -------------------------
     query_db("""
         UPDATE Donor
@@ -579,7 +567,7 @@ def update_donor_profile(donor_id):
     ), fetch=False)
 
     # -------------------------
-    # RELOAD UPDATED DATA (IMPORTANT)
+    # RELOAD
     # -------------------------
     donor = query_db("""
         SELECT d.*, u.age
@@ -589,33 +577,17 @@ def update_donor_profile(donor_id):
     """, (donor_id,))[0]
 
     # -------------------------
-    # NORMALIZE DB VALUE SAFELY
-    # -------------------------
-    med_db = donor["medication_restricted"]
-
-    if isinstance(med_db, str):
-        med_db = med_db.strip().lower() in ["1", "true", "yes"]
-
-    med_db = bool(med_db)
-
-    weight = donor.get("weight_kg")
-    weight = float(weight) if weight is not None else None
-
-    # -------------------------
-    # ELIGIBILITY LOGIC (FINAL)
+    # ELIGIBILITY
     # -------------------------
     eligible = True
 
-    if med_db:
+    if int(donor["medication_restricted"]) == 1:
         eligible = False
     elif donor["health_status"] != "Healthy":
         eligible = False
-    elif weight is not None and weight < 45:
+    elif donor["weight_kg"] and float(donor["weight_kg"]) < 45:
         eligible = False
 
-    # -------------------------
-    # UPDATE ELIGIBILITY IN DB
-    # -------------------------
     query_db("""
         UPDATE Donor
         SET eligibility_status = %s
@@ -627,10 +599,8 @@ def update_donor_profile(donor_id):
 
     return jsonify({
         "success": True,
-        "message": "Donor profile updated successfully"
+        "message": "Donor updated successfully"
     })
-
-
 # =====================================================
 # APPOINTMENTS
 # =====================================================
